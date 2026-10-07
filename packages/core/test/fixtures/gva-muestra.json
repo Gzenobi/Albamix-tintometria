@@ -1,0 +1,21 @@
+{
+  "fuente": "albamix.mdb (fórmulas 5301 y 12341) + precios.mdb (peso específico; precios en 0,1 en el origen)",
+  "componentes": [
+    { "codigo": 4514130, "nombre": "Laca Nitrocelulósica Transparente", "tipo": "B", "unidad": "L", "pesoEspecifico": 0.9, "envases": [{ "capacidad": 3.2, "precio": 0.1 }, { "capacidad": 16, "precio": 0.1 }] },
+    { "codigo": 4570104, "nombre": "Esm. Poliuretano Acrílica Base Amarilla", "tipo": "B", "unidad": "L", "pesoEspecifico": 1.03, "envases": [{ "capacidad": 3.7, "precio": 0.1 }, { "capacidad": 18.5, "precio": 0.1 }] },
+    { "codigo": 4600000, "nombre": "GVA147 BLANCO", "tipo": "C", "unidad": "L", "pesoEspecifico": 1.68, "envases": [{ "capacidad": 1, "precio": 0.1 }] },
+    { "codigo": 4600004, "nombre": "GVA 124 AZUL ORGANICO", "tipo": "C", "unidad": "L", "pesoEspecifico": 1.09, "envases": [{ "capacidad": 1, "precio": 0.1 }] },
+    { "codigo": 4600101, "nombre": "GVA 145 AMARILLO MEDIANO", "tipo": "C", "unidad": "L", "pesoEspecifico": 1.09, "envases": [{ "capacidad": 1, "precio": 0.1 }] },
+    { "codigo": 4600301, "nombre": "GVA 146 LIMON", "tipo": "C", "unidad": "L", "pesoEspecifico": 1.1, "envases": [{ "capacidad": 1, "precio": 0.1 }] },
+    { "codigo": 4600602, "nombre": "GVA 142 VIOLETA ORGANICO", "tipo": "C", "unidad": "L", "pesoEspecifico": 1.06, "envases": [{ "capacidad": 1, "precio": 0.1 }] }
+  ],
+  "formulas": [
+    { "id": 5301, "codigo": 1552, "nombre": "IRAM 05-1-020  AMARILLO", "renglones": [
+      { "linea": 1, "comp": 4514130, "cant": 880 }, { "linea": 2, "comp": 4600000, "cant": 26.31 },
+      { "linea": 3, "comp": 4600004, "cant": 0.44 }, { "linea": 4, "comp": 4600101, "cant": 33.47 },
+      { "linea": 5, "comp": 4600301, "cant": 59.78 } ] },
+    { "id": 12341, "codigo": 1552, "nombre": "IRAM 05-1-020 AMARILLO", "obs": "NUEVA BASE AMARILLA", "renglones": [
+      { "linea": 1, "comp": 4570104, "cant": 980 }, { "linea": 2, "comp": 4600101, "cant": 13.95 },
+      { "linea": 3, "comp": 4600301, "cant": 4.64 }, { "linea": 4, "comp": 4600602, "cant": 1.41 } ] }
+  ]
+}

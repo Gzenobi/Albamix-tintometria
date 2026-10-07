@@ -1,0 +1,276 @@
+{
+ "fuente": "Fórmulas recuperadas de filas borradas de albamix.mdb (sistema Concentrados) + precios PESO_ESP + lista EXPORT.CSV",
+ "componentes": [
+  {
+   "codigo": 4500000,
+   "nombre": "Concentrado Blanco",
+   "tipo": "C",
+   "unidad": "L",
+   "pesoEspecifico": 1.74,
+   "envases": [
+    {
+     "capacidad": 1.0,
+     "precio": 41.16
+    }
+   ]
+  },
+  {
+   "codigo": 4500001,
+   "nombre": "Concentrado Amarillo Oxido",
+   "tipo": "C",
+   "unidad": "L",
+   "pesoEspecifico": 1.67,
+   "envases": [
+    {
+     "capacidad": 1.0,
+     "precio": 53.88
+    }
+   ]
+  },
+  {
+   "codigo": 4500002,
+   "nombre": "Concentrado Rojo Oxido",
+   "tipo": "C",
+   "unidad": "L",
+   "pesoEspecifico": 1.74,
+   "envases": [
+    {
+     "capacidad": 1.0,
+     "precio": 57.38
+    }
+   ]
+  },
+  {
+   "codigo": 4500004,
+   "nombre": "Concentrado Azul",
+   "tipo": "C",
+   "unidad": "L",
+   "pesoEspecifico": 1.06,
+   "envases": [
+    {
+     "capacidad": 1.0,
+     "precio": 69.63
+    }
+   ]
+  },
+  {
+   "codigo": 4500005,
+   "nombre": "Concentrado Verde",
+   "tipo": "C",
+   "unidad": "L",
+   "pesoEspecifico": 1.06,
+   "envases": [
+    {
+     "capacidad": 1.0,
+     "precio": 58.98
+    }
+   ]
+  },
+  {
+   "codigo": 4500006,
+   "nombre": "Concentrado Negro",
+   "tipo": "C",
+   "unidad": "L",
+   "pesoEspecifico": 1.03,
+   "envases": [
+    {
+     "capacidad": 1.0,
+     "precio": 34.02
+    }
+   ]
+  },
+  {
+   "codigo": 4500008,
+   "nombre": "Concentrado Neutro",
+   "tipo": "C",
+   "unidad": "L",
+   "pesoEspecifico": 1.9,
+   "envases": [
+    {
+     "capacidad": 1.0,
+     "precio": 21.19
+    }
+   ]
+  },
+  {
+   "codigo": 4500201,
+   "nombre": "Concentrado Amarillo Orgánico",
+   "tipo": "C",
+   "unidad": "L",
+   "pesoEspecifico": 1.14,
+   "envases": [
+    {
+     "capacidad": 1.0,
+     "precio": 180.62
+    }
+   ]
+  },
+  {
+   "codigo": 4570100,
+   "nombre": "Esm. Poliuretano Acrílico",
+   "tipo": "B",
+   "unidad": "L",
+   "pesoEspecifico": 0.97,
+   "envases": [
+    {
+     "capacidad": 3.0,
+     "precio": 54.45
+    },
+    {
+     "capacidad": 15.0,
+     "precio": 251.96
+    }
+   ]
+  },
+  {
+   "codigo": 4581000,
+   "nombre": "Esm. Caucho Clorado",
+   "tipo": "B",
+   "unidad": "L",
+   "pesoEspecifico": 1.2,
+   "envases": [
+    {
+     "capacidad": 3.2,
+     "precio": 63.2
+    },
+    {
+     "capacidad": 16.0,
+     "precio": 304.41
+    }
+   ]
+  }
+ ],
+ "casos": [
+  {
+   "idRecuperado": 5068,
+   "codigo": 1012,
+   "nombre": "RAL 1012",
+   "renglones": [
+    {
+     "linea": 1,
+     "comp": 4581000,
+     "cant": 850.0
+    },
+    {
+     "linea": 2,
+     "comp": 4500004,
+     "cant": 8.45
+    },
+    {
+     "linea": 3,
+     "comp": 4500005,
+     "cant": 7.77
+    },
+    {
+     "linea": 4,
+     "comp": 4500201,
+     "cant": 15.43
+    },
+    {
+     "linea": 5,
+     "comp": 4500001,
+     "cant": 17.02
+    },
+    {
+     "linea": 6,
+     "comp": 4500000,
+     "cant": 26.32
+    },
+    {
+     "linea": 7,
+     "comp": 4500008,
+     "cant": 75.01
+    }
+   ],
+   "listaEXPORT": {
+    "3,765": "120,17",
+    "18,824": "585,57"
+   },
+   "origenRecuperado": "albamix.mdb"
+  },
+  {
+   "idRecuperado": 5070,
+   "codigo": 2010,
+   "nombre": "RAL 2010",
+   "renglones": [
+    {
+     "linea": 1,
+     "comp": 4581000,
+     "cant": 850.0
+    },
+    {
+     "linea": 2,
+     "comp": 4500004,
+     "cant": 15.62
+    },
+    {
+     "linea": 3,
+     "comp": 4500005,
+     "cant": 24.32
+    },
+    {
+     "linea": 4,
+     "comp": 4500201,
+     "cant": 74.04
+    },
+    {
+     "linea": 5,
+     "comp": 4500001,
+     "cant": 27.36
+    },
+    {
+     "linea": 6,
+     "comp": 4500000,
+     "cant": 8.66
+    }
+   ],
+   "listaEXPORT": {
+    "3,765": "171,19",
+    "18,824": "840,68"
+   },
+   "origenRecuperado": "albamix.mdb"
+  },
+  {
+   "idRecuperado": 42,
+   "codigo": 1107,
+   "nombre": "MAGIRUS BEIGEGRAU MD4",
+   "renglones": [
+    {
+     "linea": 1,
+     "comp": 4570100,
+     "cant": 800.0
+    },
+    {
+     "linea": 2,
+     "comp": 4500000,
+     "cant": 104.3
+    },
+    {
+     "linea": 3,
+     "comp": 4500001,
+     "cant": 1.5
+    },
+    {
+     "linea": 4,
+     "comp": 4500002,
+     "cant": 2.7
+    },
+    {
+     "linea": 5,
+     "comp": 4500005,
+     "cant": 17.92
+    },
+    {
+     "linea": 6,
+     "comp": 4500006,
+     "cant": 73.58
+    }
+   ],
+   "listaEXPORT": {
+    "3,75": "118,24",
+    "18,75": "562,90"
+   },
+   "origenRecuperado": "personal.mdb"
+  }
+ ]
+}
