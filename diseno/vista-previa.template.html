@@ -1,0 +1,375 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Albamix tintometría</title>
+<style>
+  :root {
+    /* Base AkzoNobel (manual oficial) */
+    --navy: #005192; --sky: #008BC5; --navy-l: #8CB6D9; --sky-l: #A3DDF5;
+    --gray-d: #868688; --gray-l: #B7B9BA; --ink: #000000; --paper: #FFFFFF;
+    --ground: #F2F4F6; --line: #DCE0E4;
+    /* Acento Albamix, tomado del degradado del logo: se usa solo en el paso que se está pesando */
+    --alb-olive: #999E2A; --alb-amber: #E4B200; --alb-orange: #C77805; --alb-amber-l: #FFF5D1;
+    --r: 4px;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; font-family: Arial, Helvetica, sans-serif; color: var(--ink); background: var(--ground); font-size: 15px; line-height: 1.4; }
+  .num { font-variant-numeric: tabular-nums; }
+  :focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; }
+  [hidden] { display: none !important; }
+
+  /* Encabezado */
+  header { background: var(--paper); display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 10px 24px; position: relative; }
+  header::after { content: ""; position: absolute; left: 0; right: 0; bottom: -4px; height: 4px; background: linear-gradient(90deg, var(--alb-olive), var(--alb-amber), var(--alb-orange)); }
+  .marca { display: flex; align-items: center; gap: 18px; }
+  .marca img.albamix { height: 44px; width: auto; display: block; }
+  .marca .lugar { font-size: 13px; color: var(--gray-d); }
+  .marca .lugar b { display: block; color: var(--ink); font-size: 15px; }
+  header img.akzo { height: 34px; width: auto; display: block; }
+  .borrador { font-size: 12px; color: var(--navy); border: 1px solid var(--navy-l); border-radius: var(--r); padding: 2px 6px; margin-left: 6px; vertical-align: 1px; }
+
+  /* Pestañas: dos tareas del mostrador */
+  nav { display: flex; gap: 2px; padding: 16px 24px 0; }
+  nav button { font: inherit; font-size: 15px; border: 1px solid var(--line); border-bottom: 0; background: transparent; color: var(--gray-d); padding: 10px 18px; border-radius: var(--r) var(--r) 0 0; cursor: pointer; }
+  nav button.on { background: var(--paper); color: var(--navy); font-weight: bold; }
+  nav button:disabled { cursor: default; }
+  nav .pronto { margin-left: auto; align-self: center; font-size: 13px; color: var(--gray-d); padding-bottom: 8px; }
+  main { background: var(--paper); margin: 0 24px 24px; border: 1px solid var(--line); border-radius: 0 var(--r) var(--r) var(--r); min-height: 70vh; }
+
+  /* Controles */
+  label.t { display: block; font-size: 13px; color: var(--gray-d); margin-bottom: 4px; }
+  input, select { font: inherit; padding: 9px 10px; border: 1px solid var(--gray-l); border-radius: var(--r); background: var(--paper); color: var(--ink); }
+  .seg { display: inline-flex; border: 1px solid var(--navy); border-radius: var(--r); overflow: hidden; }
+  .seg button { border: 0; background: var(--paper); color: var(--navy); padding: 9px 14px; font: inherit; cursor: pointer; }
+  .seg button + button { border-left: 1px solid var(--navy); }
+  .seg button.on { background: var(--navy); color: #fff; }
+  .btn { font: inherit; border-radius: var(--r); padding: 10px 16px; cursor: pointer; border: 1px solid var(--navy); background: var(--navy); color: #fff; }
+  .btn.sec { background: var(--paper); color: var(--navy); }
+  .link { font: inherit; font-size: 14px; background: none; border: 0; color: var(--navy); text-decoration: underline; cursor: pointer; padding: 6px 4px; }
+  .btn:disabled { opacity: .4; cursor: default; }
+
+  /* ---------- Buscar ---------- */
+  .buscar-top { padding: 28px 28px 18px; display: grid; grid-template-columns: 1fr auto; gap: 18px 24px; align-items: end; border-bottom: 1px solid var(--line); }
+  .buscar-top .q-wrap { grid-column: 1 / -1; }
+  #q { width: 100%; font-size: 26px; padding: 14px 16px; border: 2px solid var(--navy); }
+  .filtros { display: flex; gap: 20px; flex-wrap: wrap; align-items: end; }
+  #cuenta { color: var(--gray-d); font-size: 14px; justify-self: end; }
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; font-size: 13px; color: var(--gray-d); font-weight: normal; padding: 10px 12px; border-bottom: 1px solid var(--line); background: var(--paper); position: sticky; top: 0; }
+  td { padding: 10px 12px; border-bottom: 1px solid #EEF0F2; }
+  .r { text-align: right; white-space: nowrap; }
+  #res tr { cursor: pointer; }
+  #res tr:hover td, #res tr:focus-visible td { background: #EEF4FA; }
+  #res td.cod { font-weight: bold; width: 90px; }
+  #res td.fecha { color: var(--gray-d); width: 110px; }
+  .personal { color: var(--navy); font-size: 13px; border: 1px solid var(--navy-l); border-radius: var(--r); padding: 1px 6px; }
+  .tabla-wrap { max-height: 58vh; overflow: auto; }
+  .vacio { padding: 48px 28px; color: var(--gray-d); text-align: center; }
+
+  /* ---------- Dosificar ---------- */
+  .dos-top { padding: 22px 28px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; gap: 24px; flex-wrap: wrap; align-items: flex-start; }
+  .dos-top h1 { margin: 0; font-size: 28px; line-height: 1.15; }
+  .dos-top h1 .cod { color: var(--navy); margin-right: 10px; }
+  .dos-top .base { margin-top: 6px; color: var(--gray-d); }
+  .dos-top .base b { color: var(--ink); font-weight: normal; }
+  .dos-ctrl { display: flex; gap: 16px; flex-wrap: wrap; align-items: end; }
+  .dos-cuerpo { display: grid; grid-template-columns: minmax(0, 1fr) 320px; }
+  .pesada { padding: 24px 28px 28px; border-right: 1px solid var(--line); min-width: 0; }
+  .ahora { border: 2px solid var(--alb-amber); background: var(--alb-amber-l); border-radius: var(--r); padding: 18px 22px; display: grid; grid-template-columns: 1fr auto; gap: 6px 24px; align-items: end; }
+  .ahora .paso { font-size: 14px; color: #6b4a00; }
+  .ahora .que { font-size: 22px; font-weight: bold; }
+  .ahora .agrega { font-size: 15px; color: #6b4a00; }
+  .ahora .agrega b { font-size: 22px; color: var(--ink); }
+  .ahora .lectura { grid-row: 1 / span 3; grid-column: 2; text-align: right; }
+  .ahora .lectura .lbl { font-size: 14px; color: #6b4a00; }
+  .ahora .lectura .g { font-size: 64px; font-weight: bold; line-height: 1; letter-spacing: -1px; }
+  .ahora .lectura .g small { font-size: 26px; font-weight: normal; margin-left: 4px; }
+  .ahora.listo { border-color: var(--navy); background: #EEF4FA; }
+  .ahora.listo .paso, .ahora.listo .agrega, .ahora.listo .lectura .lbl { color: var(--navy); }
+  .acciones-paso { display: flex; gap: 10px; margin: 12px 0 22px; align-items: center; flex-wrap: wrap; }
+  .acciones-paso .ayuda { color: var(--gray-d); font-size: 13px; }
+  kbd { font: inherit; font-size: 12px; border: 1px solid var(--gray-l); border-bottom-width: 2px; border-radius: 3px; padding: 0 5px; }
+  #pasos tr td:first-child { width: 44px; color: var(--gray-d); }
+  #pasos tr.hecho td { color: var(--gray-d); }
+  #pasos tr.hecho td.comp { text-decoration: line-through; }
+  #pasos tr.actual td { background: var(--alb-amber-l); font-weight: bold; }
+  #pasos tr.actual td:first-child { box-shadow: inset 4px 0 0 var(--alb-amber); color: var(--ink); }
+  #pasos tfoot td { font-weight: bold; border-bottom: 0; }
+  .sm { display: none; }
+  .base-tag { font-size: 12px; color: var(--gray-d); font-weight: normal; margin-left: 6px; }
+
+  .ticket { padding: 24px 24px 28px; }
+  .ticket .precio { font-size: 40px; font-weight: bold; line-height: 1.1; margin: 2px 0 14px; }
+  .ticket .precio small { font-size: 15px; font-weight: normal; color: var(--gray-d); display: block; }
+  .ticket .precio.pendiente { font-size: 22px; color: var(--gray-d); }
+  .kv { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; border-top: 1px solid #EEF0F2; font-size: 14px; }
+  .kv span:first-child { color: var(--gray-d); }
+  .aviso { margin-top: 14px; font-size: 13px; padding: 10px 12px; border-left: 3px solid var(--navy); background: #EEF4FA; }
+  .aviso.falta { border-left-color: var(--gray-d); background: var(--ground); }
+  .ticket .botones { display: flex; flex-direction: column; gap: 8px; margin-top: 22px; }
+  .ticket .nota { font-size: 13px; color: var(--gray-d); margin: 8px 0 0; }
+
+  #print-sheet { display: none; }
+
+  @media (max-width: 900px) {
+    header, nav { padding-left: 14px; padding-right: 14px; }
+    main { margin: 0 14px 14px; }
+    .dos-cuerpo { grid-template-columns: 1fr; }
+    .pesada { border-right: 0; border-bottom: 1px solid var(--line); padding: 18px; }
+    .ahora { grid-template-columns: 1fr; }
+    .ahora .lectura { grid-row: auto; grid-column: auto; text-align: left; }
+    .ahora .lectura .g { font-size: 48px; }
+    .buscar-top { grid-template-columns: 1fr; padding: 18px; }
+    #cuenta { justify-self: start; }
+    #q { font-size: 20px; }
+    nav .pronto { display: none; }
+    .lg { display: none; } .sm { display: inline; }
+    .pesada td, .pesada th { padding: 9px 6px; font-size: 14px; }
+    #pasos tr td:first-child { width: 28px; }
+    .marca { gap: 12px; }
+    .marca img.albamix { height: 34px; }
+    .marca .lugar span.sub { display: none; }
+    header img.akzo { height: 24px; }
+  }
+  @media (hover: none), (max-width: 900px) { .acciones-paso .ayuda { display: none; } }
+  @media (prefers-reduced-motion: no-preference) {
+    .ahora { transition: background-color .2s, border-color .2s; }
+  }
+  @media print {
+    body { background: #fff; }
+    header, nav, main { display: none !important; }
+    #print-sheet { display: block; padding: 10mm; font-size: 12px; }
+    #print-sheet h1 { font-size: 18px; margin: 6px 0 4px; }
+    #print-sheet td, #print-sheet th { padding: 4px 6px; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="marca">
+    <img class="albamix" src="__ALBAMIX__" alt="Albamix, industrial color service">
+    <div class="lugar"><b>Tintometría <span class="borrador">Borrador</span></b><span class="sub">Distribuidor de ejemplo, sin conexión</span></div>
+  </div>
+  <img class="akzo" src="__AKZO__" alt="AkzoNobel">
+</header>
+
+<nav id="nav" aria-label="Secciones">
+  <button data-v="buscar" class="on">Buscar color</button>
+  <button data-v="dosificar">Dosificar</button>
+  <span class="pronto">Clientes, fórmulas personales y precios llegan en la etapa 4</span>
+</nav>
+
+<main>
+  <section id="v-buscar">
+    <div class="buscar-top">
+      <div class="q-wrap">
+        <label class="t" for="q">Código o nombre del color</label>
+        <input id="q" placeholder="1552, RAL 9005, amarillo…" autocomplete="off" autofocus>
+      </div>
+      <div class="filtros">
+        <div><span class="t" style="display:block;font-size:13px;color:var(--gray-d);margin-bottom:4px">Colorantes</span>
+          <div class="seg" id="sis" role="group" aria-label="Sistema de colorantes"><button data-s="gva" class="on">GVA</button><button data-s="conc">Concentrados</button></div></div>
+        <div><label class="t" for="fb">Producto</label><select id="fb"><option value="">Todos los productos</option></select></div>
+      </div>
+      <div id="cuenta" class="num"></div>
+    </div>
+    <div class="tabla-wrap"><table>
+      <thead><tr><th>Código</th><th>Color</th><th>Producto</th><th>Cargada</th></tr></thead>
+      <tbody id="res"></tbody></table></div>
+  </section>
+
+  <section id="v-dosificar" hidden>
+    <div id="dos-empty" class="vacio">Buscá un color y elegilo de la lista para dosificarlo.</div>
+    <div id="dos" hidden>
+      <div class="dos-top">
+        <div>
+          <h1><span class="cod num" id="d-cod"></span><span id="d-nom"></span></h1>
+          <div class="base">Producto <b id="d-base"></b>, <span id="d-sis"></span></div>
+          <div class="base" id="d-obs"></div>
+        </div>
+        <div class="dos-ctrl">
+          <div><label class="t" for="d-env">Lata de base</label><select id="d-env"></select></div>
+          <div id="d-libre-wrap" hidden><label class="t" for="d-libre">Litros</label><input id="d-libre" type="number" min="0.1" step="0.1" value="4" style="width:90px"></div>
+          <div><span style="display:block;font-size:13px;color:var(--gray-d);margin-bottom:4px">Cómo se dosifica</span>
+            <div class="seg" id="modo" role="group" aria-label="Modo de dosificación"><button data-m="balanza" class="on">Balanza</button><button data-m="corob">COROB D600</button></div></div>
+        </div>
+      </div>
+      <div class="dos-cuerpo">
+        <div class="pesada">
+          <div id="ahora" class="ahora" aria-live="polite"></div>
+          <div class="acciones-paso" id="acciones-paso">
+            <button class="btn" id="b-sig">Listo, siguiente</button>
+            <button class="btn sec" id="b-ant">Volver un paso</button>
+            <button class="link" id="b-rei">Empezar de nuevo</button>
+            <span class="ayuda"><kbd>Enter</kbd> o <kbd>Espacio</kbd> avanza</span>
+          </div>
+          <table><thead id="d-head"></thead><tbody id="pasos"></tbody><tfoot id="d-foot"></tfoot></table>
+        </div>
+        <aside class="ticket" aria-label="Precio">
+          <div id="d-precio"></div>
+          <div class="botones">
+            <button class="btn" onclick="imprimir()">Imprimir orden</button>
+            <button class="btn sec" disabled>Guardar en el historial del cliente</button>
+          </div>
+          <p class="nota">Imprimir abre el diálogo de Windows para elegir la impresora.</p>
+        </aside>
+      </div>
+    </div>
+  </section>
+</main>
+<div id="print-sheet"></div>
+
+<script>
+const DATA = __DATA__;
+const RENT_CONC = __RENT__;
+const nf = (n, d = 2) => n.toLocaleString('es-AR', { minimumFractionDigits: d, maximumFractionDigits: d });
+const $ = (id) => document.getElementById(id);
+let sis = 'gva', modo = 'balanza', sel = null, paso = 0, filas = [], ultimo = null;
+
+const cat = () => DATA[sis].cat;
+const comp = (c) => cat()[c];
+const baseNombre = (f) => { const b = comp(f[5][0][0]); return b ? b[0] : String(f[5][0][0]); };
+
+// ---------- Buscar ----------
+function poblarBases() {
+  const usadas = new Map();
+  for (const f of DATA[sis].f) usadas.set(f[5][0][0], baseNombre(f));
+  $('fb').innerHTML = '<option value="">Todos los productos</option>' + [...usadas].sort((a, b) => a[1].localeCompare(b[1]))
+    .map(([c, n]) => `<option value="${c}">${n}</option>`).join('');
+}
+function buscar() {
+  const q = $('q').value.trim().toUpperCase().replace(/\s+/g, ' ');
+  const b = $('fb').value, out = [];
+  for (const [i, f] of DATA[sis].f.entries()) {
+    if (b && String(f[5][0][0]) !== b) continue;
+    if (q && !(String(f[0]).startsWith(q) || f[1].toUpperCase().includes(q))) continue;
+    out.push(i); if (out.length >= 300) break;
+  }
+  const total = DATA[sis].f.length.toLocaleString('es-AR');
+  $('cuenta').textContent = q || b ? `${out.length >= 300 ? 'Más de 300' : out.length} de ${total} fórmulas` : `${total} fórmulas`;
+  $('res').innerHTML = out.map((i) => { const f = DATA[sis].f[i];
+    return `<tr tabindex="0" data-i="${i}"><td class="cod num">${f[0]}</td><td>${f[1]}${f[4] === 'P' ? ' <span class="personal">personal</span>' : ''}</td>
+      <td>${baseNombre(f)}</td><td class="fecha num">${f[3] ? f[3].split('-').reverse().join('/') : ''}</td></tr>`; }).join('')
+    || `<tr><td colspan="4" class="vacio">Ningún color coincide con “${$('q').value}”. Probá con el código o con una parte del nombre.</td></tr>`;
+}
+function elegir(tr) { if (!tr || !tr.dataset.i) return; sel = DATA[sis].f[+tr.dataset.i]; abrirDosificar(); }
+$('res').addEventListener('click', (e) => elegir(e.target.closest('tr')));
+$('res').addEventListener('keydown', (e) => { if (e.key === 'Enter') elegir(e.target.closest('tr')); });
+$('q').addEventListener('input', buscar); $('fb').addEventListener('change', buscar);
+$('sis').addEventListener('click', (e) => { const s = e.target.dataset.s; if (!s) return; sis = s;
+  [...$('sis').children].forEach((x) => x.classList.toggle('on', x.dataset.s === s)); poblarBases(); buscar(); });
+
+// ---------- Navegación ----------
+function ver(v) { for (const s of ['buscar', 'dosificar']) $('v-' + s).hidden = s !== v;
+  [...$('nav').querySelectorAll('button')].forEach((b) => b.classList.toggle('on', b.dataset.v === v)); }
+$('nav').addEventListener('click', (e) => { const b = e.target.closest('button[data-v]'); if (b) ver(b.dataset.v); });
+
+// ---------- Dosificar (misma lógica que packages/core) ----------
+function abrirDosificar() {
+  $('dos-empty').hidden = true; $('dos').hidden = false; ver('dosificar');
+  const base = comp(sel[5][0][0]);
+  $('d-cod').textContent = sel[0]; $('d-nom').textContent = sel[1];
+  $('d-base').textContent = `${base[0]} (${sel[5][0][0]})`;
+  $('d-sis').textContent = sis === 'gva' ? 'colorantes GVA' : 'colorantes Concentrados';
+  $('d-obs').textContent = sel[2] ? sel[2] : '';
+  $('d-env').innerHTML = base[3].map((e, i) => `<option value="${i}">${nf(e[0], e[0] % 1 ? 1 : 0)} L</option>`).join('')
+    + '<option value="libre">Otra cantidad</option>';
+  paso = 0; calcular();
+}
+function calcular() {
+  const ls = sel[5], base = comp(ls[0][0]), envSel = $('d-env').value;
+  $('d-libre-wrap').hidden = envSel !== 'libre';
+  const cap = envSel === 'libre' ? Math.max(0, +$('d-libre').value || 0) : base[3][+envSel][0] / (ls[0][1] / 1000);
+  let acum = 0;
+  filas = ls.map(([c, q]) => { const k = comp(c); const ml = q / 1000 * cap * 1000; const g = ml * k[2]; acum += g; return { c, k, q, ml, g, acum }; });
+  pintarPesada(cap);
+
+  const env = envSel === 'libre' ? null : base[3][+envSel];
+  const costoBase = env ? env[1] : filas[0].ml / 1000 * base[3][0][1] / base[3][0][0];
+  const costoCol = filas.slice(1).reduce((s, r) => s + r.ml / 1000 * r.k[3][0][1] / r.k[3][0][0], 0);
+  const costo = costoBase + costoCol;
+  let html, precioTxt;
+  if (sis === 'gva') {
+    precioTxt = 'Precio GVA pendiente';
+    html = `<div class="precio pendiente">Precio pendiente<small>Rinde ${nf(cap, 3)} L</small></div>
+      <div class="aviso falta">Falta la lista de precios del sistema GVA: el archivo de precios que tenemos los trae todos en $0,10. Los gramos sí son correctos.</div>`;
+  } else {
+    const rent = RENT_CONC[ls[0][0]] ?? 0.32;
+    const precio = Math.round(costo * (1 + rent) * 100) / 100;
+    precioTxt = `Precio sin IVA: $ ${nf(precio)}`;
+    html = `<div class="precio num">$ ${nf(precio)}<small>sin IVA, rinde ${nf(cap, 3)} L</small></div>
+      <div class="kv num"><span>Lata de base</span><span>$ ${nf(costoBase)}</span></div>
+      <div class="kv num"><span>Colorantes</span><span>$ ${nf(costoCol)}</span></div>
+      <div class="kv num"><span>Costo</span><span>$ ${nf(costo)}</span></div>
+      <div class="kv num"><span>Rentabilidad del producto</span><span>${nf(rent * 100, 1)} %</span></div>`;
+    if (env && sel[6]) { const lista = sel[6][+envSel], dif = Math.round((precio - lista) * 100) / 100;
+      html += `<div class="aviso num">${dif === 0 ? `Igual a la lista Albamix original: $ ${nf(lista)}` : `Lista Albamix original: $ ${nf(lista)}, diferencia $ ${nf(dif)}`}</div>`; }
+  }
+  $('d-precio').innerHTML = html;
+  ultimo = { cap, precioTxt };
+}
+function pintarPesada(cap) {
+  const balanza = modo === 'balanza', n = filas.length;
+  $('acciones-paso').hidden = !balanza;
+  if (balanza) {
+    $('d-head').innerHTML = '<tr><th>Paso</th><th>Componente</th><th class="r">Agregar</th><th class="r"><span class="lg">La balanza marca</span><span class="sm">Balanza</span></th></tr>';
+    $('pasos').innerHTML = filas.map((r, i) => `<tr class="${i < paso ? 'hecho' : i === paso ? 'actual' : ''}">
+      <td class="num">${i + 1}</td><td class="comp">${r.k[0]}${i === 0 ? '<span class="base-tag">base</span>' : ''}</td>
+      <td class="r num">${nf(r.g, 1)} g</td><td class="r num">${nf(r.acum, 1)} g</td></tr>`).join('');
+    $('d-foot').innerHTML = `<tr><td></td><td>Total</td><td></td><td class="r num">${nf(filas[n - 1].acum, 1)} g</td></tr>`;
+    const a = $('ahora');
+    if (paso < n) { const r = filas[paso];
+      a.className = 'ahora';
+      a.innerHTML = `<div class="paso">Paso ${paso + 1} de ${n}${paso === 0 ? ', tarar la balanza con la lata vacía' : ''}</div>
+        <div class="que">${r.k[0]}</div>
+        <div class="agrega">Agregá <b class="num">${nf(r.g, 1)} g</b></div>
+        <div class="lectura"><div class="lbl">La balanza tiene que marcar</div><div class="g num">${nf(r.acum, 1)}<small>g</small></div></div>`;
+    } else {
+      a.className = 'ahora listo';
+      a.innerHTML = `<div class="paso">Pesada completa</div><div class="que">Mezclar y verificar el color</div>
+        <div class="agrega">Rinde <b class="num">${nf(cap, 3)} L</b></div>
+        <div class="lectura"><div class="lbl">Peso final</div><div class="g num">${nf(filas[n - 1].acum, 1)}<small>g</small></div></div>`;
+    }
+    $('b-sig').disabled = paso >= n; $('b-ant').disabled = paso === 0;
+  } else {
+    $('d-head').innerHTML = '<tr><th>Orden</th><th>Componente</th><th class="r">Dispensar</th><th class="r">Por cada litro</th></tr>';
+    $('pasos').innerHTML = filas.map((r, i) => `<tr><td class="num">${i + 1}</td><td class="comp">${r.k[0]}${i === 0 ? '<span class="base-tag">base</span>' : ''}</td>
+      <td class="r num">${nf(r.ml, 1)} ml</td><td class="r num">${nf(r.q, 2)} ml</td></tr>`).join('');
+    $('d-foot').innerHTML = `<tr><td></td><td>Total</td><td class="r num">${nf(cap * 1000, 0)} ml</td><td></td></tr>`;
+    const a = $('ahora'); a.className = 'ahora listo';
+    a.innerHTML = `<div class="paso">Dispensadora COROB D600</div><div class="que">La base va a mano, los colorantes los dispensa la máquina</div>
+      <div class="agrega">El envío directo a la COROB llega en una etapa siguiente.</div>
+      <div class="lectura"><div class="lbl">Volumen final</div><div class="g num">${nf(cap, 3)}<small>L</small></div></div>`;
+  }
+}
+function mover(d) { if (modo !== 'balanza' || !sel) return; paso = Math.min(filas.length, Math.max(0, paso + d)); pintarPesada(ultimo.cap); }
+$('b-sig').onclick = () => mover(1); $('b-ant').onclick = () => mover(-1); $('b-rei').onclick = () => { paso = 0; pintarPesada(ultimo.cap); };
+document.addEventListener('keydown', (e) => {
+  if ($('v-dosificar').hidden || !sel) return;
+  if (['INPUT', 'SELECT', 'BUTTON'].includes(e.target.tagName)) return;
+  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); mover(1); }
+  if (e.key === 'Backspace') { e.preventDefault(); mover(-1); }
+});
+$('d-env').addEventListener('change', () => { paso = 0; calcular(); });
+$('d-libre').addEventListener('input', () => { paso = 0; calcular(); });
+$('modo').addEventListener('click', (e) => { const m = e.target.dataset.m; if (!m) return; modo = m;
+  [...$('modo').children].forEach((b) => b.classList.toggle('on', b.dataset.m === m)); if (sel) pintarPesada(ultimo.cap); });
+
+function imprimir() {
+  const base = comp(sel[5][0][0]);
+  $('print-sheet').innerHTML = `<img src="__ALBAMIX__" style="height:40px" alt="Albamix"><h1>${sel[0]} ${sel[1]}</h1>
+    <div>Producto: <b>${base[0]}</b>. Rinde <b>${nf(ultimo.cap, 3)} L</b>. ${new Date().toLocaleDateString('es-AR')}</div>
+    ${sel[2] ? `<div>${sel[2]}</div>` : ''}
+    <table style="margin-top:8px"><thead><tr><th>Paso</th><th>Componente</th><th class="r">Gramos</th><th class="r">Balanza</th><th class="r">ml</th></tr></thead><tbody>
+    ${filas.map((r, i) => `<tr><td>${i + 1}</td><td>${r.k[0]}</td><td class="r">${nf(r.g, 1)}</td><td class="r">${nf(r.acum, 1)}</td><td class="r">${nf(r.ml, 1)}</td></tr>`).join('')}
+    </tbody></table><p><b>${ultimo.precioTxt}</b></p>`;
+  window.print();
+}
+
+poblarBases(); buscar();
+</script>
+</body>
+</html>
