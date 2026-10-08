@@ -99,6 +99,18 @@
   #pasos tr.actual td:first-child { box-shadow: inset 4px 0 0 var(--alb-amber); color: var(--ink); }
   #pasos tfoot td { font-weight: bold; border-bottom: 0; }
   .sm { display: none; }
+  .chica { border-left: 3px solid var(--alb-orange); background: var(--alb-amber-l); padding: 10px 12px; margin-bottom: 14px; font-size: 14px; }
+  .correccion { border-left: 3px solid var(--navy); background: #EEF4FA; padding: 10px 12px; margin-bottom: 14px; font-size: 14px; }
+  .tag-chica { font-size: 12px; color: #6b4a00; border: 1px solid var(--alb-amber); border-radius: 3px; padding: 0 4px; margin-left: 6px; font-weight: normal; }
+  .tag-extra { font-size: 12px; color: var(--navy); border: 1px solid var(--navy-l); border-radius: 3px; padding: 0 4px; margin-right: 6px; font-weight: normal; }
+  .ahora.extra .paso, .ahora.extra .agrega { color: var(--navy); }
+  .pasado { border: 1px solid var(--line); border-radius: var(--r); padding: 14px 16px; margin: -8px 0 20px; background: var(--paper); }
+  .row-pase { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .row-pase input { font-size: 22px; }
+  .pase-ayuda { font-size: 13px; color: var(--gray-d); margin: 8px 0 0; }
+  .pase-err { font-size: 13px; color: #7a1f42; margin: 4px 0 0; }
+  .pase-err:empty { display: none; }
+  .btn.pase { border-color: var(--alb-orange); color: #6b4a00; }
   .base-tag { font-size: 12px; color: var(--gray-d); font-weight: normal; margin-left: 6px; }
 
   .ticket { padding: 24px 24px 28px; }
@@ -199,12 +211,22 @@
       </div>
       <div class="dos-cuerpo">
         <div class="pesada">
+          <div id="aviso-chico"></div>
+          <div id="correccion" class="correccion" hidden></div>
           <div id="ahora" class="ahora" aria-live="polite"></div>
           <div class="acciones-paso" id="acciones-paso">
             <button class="btn" id="b-sig">Listo, siguiente</button>
             <button class="btn sec" id="b-ant">Volver un paso</button>
+            <button class="btn sec pase" id="b-pase">Me pasé</button>
             <button class="link" id="b-rei">Empezar de nuevo</button>
             <span class="ayuda"><kbd>Enter</kbd> o <kbd>Espacio</kbd> avanza</span>
+          </div>
+          <div id="pasado" class="pasado" hidden>
+            <label class="t" for="pase-g" id="pase-q"></label>
+            <div class="row-pase"><input id="pase-g" inputmode="decimal" autocomplete="off" style="width:140px"><span>g</span>
+              <button class="btn" id="pase-ok">Recalcular</button><button class="link" id="pase-no">Cancelar</button></div>
+            <p class="pase-ayuda">Se agranda toda la tanda en la misma proporción para que el color no cambie.</p>
+            <p class="pase-err" id="pase-err" role="alert"></p>
           </div>
           <table><thead id="d-head"></thead><tbody id="pasos"></tbody><tfoot id="d-foot"></tfoot></table>
         </div>
@@ -279,92 +301,158 @@ function abrirDosificar() {
     + '<option value="libre">Otra cantidad</option>';
   paso = 0; calcular();
 }
+let F = 1, puesto = [], plan = [], pases = [];
+const UMBRAL_G = 2;
 function calcular() {
   const ls = sel[5], base = comp(ls[0][0]), envSel = $('d-env').value;
   $('d-libre-wrap').hidden = envSel !== 'libre';
   const cap = envSel === 'libre' ? Math.max(0, +$('d-libre').value || 0) : base[3][+envSel][0] / (ls[0][1] / 1000);
   let acum = 0;
   filas = ls.map(([c, q]) => { const k = comp(c); const ml = q / 1000 * cap * 1000; const g = ml * k[2]; acum += g; return { c, k, q, ml, g, acum }; });
-  pintarPesada(cap);
-
   const env = envSel === 'libre' ? null : base[3][+envSel];
   const costoBase = env ? env[1] : filas[0].ml / 1000 * base[3][0][1] / base[3][0][0];
   const costoCol = filas.slice(1).reduce((s, r) => s + r.ml / 1000 * r.k[3][0][1] / r.k[3][0][0], 0);
-  const costo = costoBase + costoCol;
-  let html, precioTxt;
+  ultimo = { cap, env, envSel, costoBase, costoCol };
+  reiniciar();
+}
+// ---------- Plan de pesada: se recalcula si el operador se pasa ----------
+function reiniciar() { F = 1; pases = []; puesto = filas.map(() => 0); paso = 0; armarPlan(); $('pasado').hidden = true; pintarTodo(); }
+function armarPlan() {
+  const lectura = puesto.reduce((s, g) => s + g, 0);
+  const correcciones = [], resto = [];
+  filas.forEach((r, i) => {
+    const falta = r.g * F - puesto[i];
+    if (falta <= 0.05) return;
+    (puesto[i] > 0 ? correcciones : resto).push({ i, g: falta, extra: puesto[i] > 0 });
+  });
+  let acum = lectura;
+  plan = [...correcciones, ...resto].map((p) => ({ ...p, acum: (acum += p.g) }));
+}
+function pintarTodo() { pintarPesada(); pintarPrecio(); }
+function pintarPrecio() {
+  const u = ultimo, ls = sel[5], cap = u.cap * F;
+  const costoBase = u.costoBase * F, costoCol = u.costoCol * F, costo = costoBase + costoCol;
+  let html;
   if (sis === 'gva') {
-    precioTxt = 'Precio GVA pendiente';
+    u.precioTxt = 'Precio GVA pendiente';
     html = `<div class="precio pendiente">Precio pendiente<small>Rinde ${nf(cap, 3)} L</small></div>
       <div class="aviso falta">Falta la lista de precios del sistema GVA: el archivo de precios que tenemos los trae todos en $0,10. Los gramos sí son correctos.</div>`;
   } else {
-    const rent = RENT_CONC[ls[0][0]] ?? 0.32;
-    const precio = Math.round(costo * (1 + rent) * 100) / 100;
-    precioTxt = `Precio sin IVA: $ ${nf(precio)}`;
+    const rent = RENT_CONC[ls[0][0]] ?? 0.32, precio = Math.round(costo * (1 + rent) * 100) / 100;
+    u.precioTxt = `Precio sin IVA: $ ${nf(precio)}`;
     html = `<div class="precio num">$ ${nf(precio)}<small>sin IVA, rinde ${nf(cap, 3)} L</small></div>
-      <div class="kv num"><span>Lata de base</span><span>$ ${nf(costoBase)}</span></div>
+      <div class="kv num"><span>${F > 1 ? 'Base (lata + agregado)' : 'Lata de base'}</span><span>$ ${nf(costoBase)}</span></div>
       <div class="kv num"><span>Colorantes</span><span>$ ${nf(costoCol)}</span></div>
       <div class="kv num"><span>Costo</span><span>$ ${nf(costo)}</span></div>
       <div class="kv num"><span>Rentabilidad del producto</span><span>${nf(rent * 100, 1)} %</span></div>`;
-    if (env && sel[6]) { const lista = sel[6][+envSel], dif = Math.round((precio - lista) * 100) / 100;
+    if (F > 1) html += `<div class="aviso num">La tanda creció ${nf((F - 1) * 100, 1)} %: el precio se ajustó en la misma proporción.</div>`;
+    else if (u.env && sel[6]) { const lista = sel[6][+u.envSel], dif = Math.round((precio - lista) * 100) / 100;
       html += `<div class="aviso num">${dif === 0 ? `Igual a la lista Albamix original: $ ${nf(lista)}` : `Lista Albamix original: $ ${nf(lista)}, diferencia $ ${nf(dif)}`}</div>`; }
   }
   $('d-precio').innerHTML = html;
-  ultimo = { cap, precioTxt };
 }
-function pintarPesada(cap) {
-  const balanza = modo === 'balanza', n = filas.length;
+function avisoChicas() {
+  const chicas = filas.filter((r) => r.g * F < UMBRAL_G);
+  if (!chicas.length || F > 1) return '';
+  const minG = Math.min(...chicas.map((r) => r.g)), capMin = ultimo.cap * UMBRAL_G / minG;
+  const base = comp(sel[5][0][0]), frac = sel[5][0][1] / 1000;
+  const idx = base[3].findIndex((e) => e[0] / frac >= capMin);
+  const nombres = chicas.map((r) => `${r.k[0]} (${nf(r.g, 1)} g)`).join(' y ');
+  const sug = idx >= 0 && String(idx) !== ultimo.envSel
+    ? ` <button class="link" onclick="cambiarEnvase(${idx})">Usar la lata de ${nf(base[3][idx][0], base[3][idx][0] % 1 ? 1 : 0)} L</button>`
+    : ` Para pesarlo bien hace falta preparar al menos ${nf(capMin, 1)} L o usar una balanza de precisión.`;
+  return `<div class="chica"><b>Cantidad muy chica:</b> ${nombres} lleva menos de ${UMBRAL_G} g, poco confiable en una balanza común.${sug}</div>`;
+}
+function cambiarEnvase(i) { $('d-env').value = String(i); calcular(); }
+function pintarPesada() {
+  const balanza = modo === 'balanza', cap = ultimo.cap * F;
   $('acciones-paso').hidden = !balanza;
+  $('aviso-chico').innerHTML = balanza ? avisoChicas() : '';
   if (balanza) {
+    const n = plan.length, chica = (i) => filas[i].g * F < UMBRAL_G ? '<span class="tag-chica">menos de 2 g</span>' : '';
     $('d-head').innerHTML = '<tr><th>Paso</th><th>Componente</th><th class="r">Agregar</th><th class="r"><span class="lg">La balanza marca</span><span class="sm">Balanza</span></th></tr>';
-    $('pasos').innerHTML = filas.map((r, i) => `<tr class="${i < paso ? 'hecho' : i === paso ? 'actual' : ''}">
-      <td class="num">${i + 1}</td><td class="comp">${r.k[0]}${i === 0 ? '<span class="base-tag">base</span>' : ''}</td>
-      <td class="r num">${nf(r.g, 1)} g</td><td class="r num">${nf(r.acum, 1)} g</td></tr>`).join('');
-    $('d-foot').innerHTML = `<tr><td></td><td>Total</td><td></td><td class="r num">${nf(filas[n - 1].acum, 1)} g</td></tr>`;
+    const hechos = plan.slice(0, paso), filasHtml = plan.map((p, j) => { const r = filas[p.i];
+      return `<tr class="${j < paso ? 'hecho' : j === paso ? 'actual' : ''}">
+        <td class="num">${j + 1}</td><td class="comp">${p.extra ? '<span class="tag-extra">completar</span>' : ''}${r.k[0]}${p.i === 0 ? '<span class="base-tag">base</span>' : ''}${chica(p.i)}</td>
+        <td class="r num">${p.extra ? '+ ' : ''}${nf(p.g, 1)} g</td><td class="r num">${nf(p.acum, 1)} g</td></tr>`; });
+    $('pasos').innerHTML = filasHtml.join('');
+    const total = filas.reduce((s, r) => s + r.g * F, 0);
+    $('d-foot').innerHTML = `<tr><td></td><td>Total${F > 1 ? ' (tanda agrandada)' : ''}</td><td></td><td class="r num">${nf(total, 1)} g</td></tr>`;
     const a = $('ahora');
-    if (paso < n) { const r = filas[paso];
-      a.className = 'ahora';
-      a.innerHTML = `<div class="paso">Paso ${paso + 1} de ${n}${paso === 0 ? ', tarar la balanza con la lata vacía' : ''}</div>
-        <div class="que">${r.k[0]}</div>
-        <div class="agrega">Agregá <b class="num">${nf(r.g, 1)} g</b></div>
-        <div class="lectura"><div class="lbl">La balanza tiene que marcar</div><div class="g num">${nf(r.acum, 1)}<small>g</small></div></div>`;
+    if (paso < n) { const p = plan[paso], r = filas[p.i];
+      a.className = 'ahora' + (p.extra ? ' extra' : '');
+      const titulo = p.extra ? `Completar: ${r.k[0]}` : r.k[0];
+      const nota = p.extra && p.i === 0 ? ', de otra lata de la misma base' : (paso === 0 && F === 1 ? ', tarar la balanza con la lata vacía' : '');
+      a.innerHTML = `<div class="paso">Paso ${paso + 1} de ${n}${nota}</div>
+        <div class="que">${titulo}</div>
+        <div class="agrega">Agregá <b class="num">${nf(p.g, 1)} g</b>${p.extra ? ' más' : ''}</div>
+        <div class="lectura"><div class="lbl">La balanza tiene que marcar</div><div class="g num">${nf(p.acum, 1)}<small>g</small></div></div>`;
     } else {
       a.className = 'ahora listo';
       a.innerHTML = `<div class="paso">Pesada completa</div><div class="que">Mezclar y verificar el color</div>
         <div class="agrega">Rinde <b class="num">${nf(cap, 3)} L</b></div>
-        <div class="lectura"><div class="lbl">Peso final</div><div class="g num">${nf(filas[n - 1].acum, 1)}<small>g</small></div></div>`;
+        <div class="lectura"><div class="lbl">Peso final</div><div class="g num">${nf(total, 1)}<small>g</small></div></div>`;
     }
     $('b-sig').disabled = paso >= n; $('b-ant').disabled = paso === 0;
+    $('b-pase').disabled = paso >= n || (plan[paso] && plan[paso].i === 0 && !plan[paso].extra);
+    $('correccion').hidden = F === 1;
+    if (F > 1) $('correccion').innerHTML = `${pases.join('. ')}. Para conservar el color, la tanda se agrandó ${nf((F - 1) * 100, 1)} % y ahora rinde <b>${nf(cap, 3)} L</b>.`;
   } else {
+    $('correccion').hidden = true;
     $('d-head').innerHTML = '<tr><th>Orden</th><th>Componente</th><th class="r">Dispensar</th><th class="r">Por cada litro</th></tr>';
     $('pasos').innerHTML = filas.map((r, i) => `<tr><td class="num">${i + 1}</td><td class="comp">${r.k[0]}${i === 0 ? '<span class="base-tag">base</span>' : ''}</td>
       <td class="r num">${nf(r.ml, 1)} ml</td><td class="r num">${nf(r.q, 2)} ml</td></tr>`).join('');
-    $('d-foot').innerHTML = `<tr><td></td><td>Total</td><td class="r num">${nf(cap * 1000, 0)} ml</td><td></td></tr>`;
+    $('d-foot').innerHTML = `<tr><td></td><td>Total</td><td class="r num">${nf(ultimo.cap * 1000, 0)} ml</td><td></td></tr>`;
     const a = $('ahora'); a.className = 'ahora listo';
     a.innerHTML = `<div class="paso">Dispensadora COROB D600</div><div class="que">La base va a mano, los colorantes los dispensa la máquina</div>
       <div class="agrega">El envío directo a la COROB llega en una etapa siguiente.</div>
-      <div class="lectura"><div class="lbl">Volumen final</div><div class="g num">${nf(cap, 3)}<small>L</small></div></div>`;
+      <div class="lectura"><div class="lbl">Volumen final</div><div class="g num">${nf(ultimo.cap, 3)}<small>L</small></div></div>`;
   }
 }
-function mover(d) { if (modo !== 'balanza' || !sel) return; paso = Math.min(filas.length, Math.max(0, paso + d)); pintarPesada(ultimo.cap); }
-$('b-sig').onclick = () => mover(1); $('b-ant').onclick = () => mover(-1); $('b-rei').onclick = () => { paso = 0; pintarPesada(ultimo.cap); };
+function mover(d) {
+  if (modo !== 'balanza' || !sel) return;
+  if (d > 0 && paso < plan.length) { const p = plan[paso]; puesto[p.i] += p.g; paso++; }
+  else if (d < 0 && paso > 0) { paso--; const p = plan[paso]; puesto[p.i] -= p.g; }
+  $('pasado').hidden = true; pintarPesada();
+}
+// ---------- "Me pasé" ----------
+function abrirPase() {
+  const p = plan[paso]; if (!p) return;
+  $('pasado').hidden = false;
+  $('pase-q').textContent = `¿Cuánto marca la balanza ahora? Tenía que marcar ${nf(p.acum, 1)} g.`;
+  $('pase-err').textContent = ''; $('pase-g').value = ''; $('pase-g').focus();
+}
+function aplicarPase() {
+  const p = plan[paso], lectura = parseFloat(String($('pase-g').value).replace(/\./g, '').replace(',', '.'));
+  if (!p) return;
+  if (!(lectura > p.acum)) { $('pase-err').textContent = `Con ${$('pase-g').value || 0} g no te pasaste: marcá "Listo, siguiente" o seguí agregando.`; return; }
+  const antes = p.acum - p.g;                     // lo que marcaba la balanza antes de este paso
+  puesto[p.i] += lectura - antes;                 // lo que realmente quedó de este componente
+  F = Math.max(F, puesto[p.i] / filas[p.i].g);    // agrandar la tanda para conservar proporciones
+  pases.push(`${filas[p.i].k[0]} quedó en ${nf(puesto[p.i], 1)} g`);
+  paso = 0; armarPlan(); $('pasado').hidden = true; pintarTodo();
+}
+$('b-sig').onclick = () => mover(1); $('b-ant').onclick = () => mover(-1); $('b-rei').onclick = () => reiniciar();
+$('b-pase').onclick = abrirPase; $('pase-ok').onclick = aplicarPase; $('pase-no').onclick = () => { $('pasado').hidden = true; };
+$('pase-g').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); aplicarPase(); } if (e.key === 'Escape') $('pasado').hidden = true; });
 document.addEventListener('keydown', (e) => {
   if ($('v-dosificar').hidden || !sel) return;
   if (['INPUT', 'SELECT', 'BUTTON'].includes(e.target.tagName)) return;
   if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); mover(1); }
   if (e.key === 'Backspace') { e.preventDefault(); mover(-1); }
 });
-$('d-env').addEventListener('change', () => { paso = 0; calcular(); });
-$('d-libre').addEventListener('input', () => { paso = 0; calcular(); });
+$('d-env').addEventListener('change', calcular);
+$('d-libre').addEventListener('input', calcular);
 $('modo').addEventListener('click', (e) => { const m = e.target.dataset.m; if (!m) return; modo = m;
-  [...$('modo').children].forEach((b) => b.classList.toggle('on', b.dataset.m === m)); if (sel) pintarPesada(ultimo.cap); });
+  [...$('modo').children].forEach((b) => b.classList.toggle('on', b.dataset.m === m)); if (sel) pintarPesada(); });
 
 function imprimir() {
-  const base = comp(sel[5][0][0]);
+  const base = comp(sel[5][0][0]); let acum = 0;
   $('print-sheet').innerHTML = `<img src="__ALBAMIX__" style="height:40px" alt="Albamix"><h1>${sel[0]} ${sel[1]}</h1>
-    <div>Producto: <b>${base[0]}</b>. Rinde <b>${nf(ultimo.cap, 3)} L</b>. ${new Date().toLocaleDateString('es-AR')}</div>
-    ${sel[2] ? `<div>${sel[2]}</div>` : ''}
+    <div>Producto: <b>${base[0]}</b>. Rinde <b>${nf(ultimo.cap * F, 3)} L</b>. ${new Date().toLocaleDateString('es-AR')}</div>
+    ${sel[2] ? `<div>${sel[2]}</div>` : ''}${F > 1 ? `<div>Tanda agrandada ${nf((F - 1) * 100, 1)} % por corrección en balanza.</div>` : ''}
     <table style="margin-top:8px"><thead><tr><th>Paso</th><th>Componente</th><th class="r">Gramos</th><th class="r">Balanza</th><th class="r">ml</th></tr></thead><tbody>
-    ${filas.map((r, i) => `<tr><td>${i + 1}</td><td>${r.k[0]}</td><td class="r">${nf(r.g, 1)}</td><td class="r">${nf(r.acum, 1)}</td><td class="r">${nf(r.ml, 1)}</td></tr>`).join('')}
+    ${filas.map((r, i) => `<tr><td>${i + 1}</td><td>${r.k[0]}</td><td class="r">${nf(r.g * F, 1)}</td><td class="r">${nf((acum += r.g * F), 1)}</td><td class="r">${nf(r.ml * F, 1)}</td></tr>`).join('')}
     </tbody></table><p><b>${ultimo.precioTxt}</b></p>`;
   window.print();
 }
