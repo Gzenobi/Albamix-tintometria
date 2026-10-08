@@ -1,0 +1,99 @@
+digraph Albamix {
+  graph [rankdir=TB, fontname="Arial", fontsize=11, nodesep=0.35, ranksep=0.45, bgcolor="white", pad=0.3, newrank=true,
+         label="Albamix – Sistema Industrial (VB3): flujo deducido del ejecutable y las bases\nRectángulo = pantalla · Rombo = decisión/regla · Cilindro = base de datos · Nota = mensaje real de la app", labelloc=t, fontcolor="#333333"];
+  node  [fontname="Arial", fontsize=10, shape=box, style="rounded,filled", fillcolor="#EAF2F9", color="#005192", fontcolor="#000000", margin="0.12,0.06"];
+  edge  [fontname="Arial", fontsize=9, color="#555555", fontcolor="#005192", arrowsize=0.7];
+
+  // Bases de datos
+  node [shape=cylinder, style=filled, fillcolor="#F2F2F2", color="#868688"];
+  db_alb [label="albamix.mdb\nFormulasC / R / Cap"];
+  db_per [label="personal.mdb\nFormulasC / R / Cap + clave"];
+  db_pre [label="precios.mdb\nComponentes"];
+  db_bon [label="bonifica.mdb\nrentabil.mdb"];
+
+  // Mensajes reales
+  node [shape=note, style=filled, fillcolor="#FFF4F8", color="#E0457A", fontsize=9];
+  e_bases  [label="\"No fue posible abrir las bases.\nImposible continuar.\""];
+  e_clave  [label="\"La clave no es correcta.\""];
+  e_enuso  [label="\"El producto se encuentra en uso.\nImposible borrar.\""];
+  e_1000   [label="\"Las cantidades de componentes deben\ntotalizar 1000 c.c.\""];
+  e_base1  [label="\"La base debe ser el primer componente\"\n\"Para esa base, la cantidad debe ser\n800 / 850 / 900 / 980 c.c.\""];
+  e_todas  [label="\"La búsqueda de todas las fórmulas puede\ndemorar un tiempo considerable. ¿Prosigue?\""];
+
+  // Pantallas
+  node [shape=box, style="rounded,filled", fillcolor="#EAF2F9", color="#005192", fontsize=10];
+  inicio  [label="Inicio\nFrmSplash", fillcolor="#005192", fontcolor="white"];
+  menu    [label="Menú inicial\nFrmMenuInicial\n[Productos] [Fórmulas] [Dosificar fórmula]\n[Bonificaciones y Rentabilidad] [Salir]", fillcolor="#D6E6F4"];
+  prods   [label="Lista de productos\nfrmProductos\nF3/F4 Ordenar · F5 Agregar · F7 Borrar\nF8 Modificar · F9 Imprimir · F10 Excel"];
+  prod    [label="Alta / edición de producto\nfrmProducto\nCódigo, Nombre, Tipo, Peso esp.\nCapacidades (precio por envase)"];
+  selfo   [label="Seleccionar fórmulas\nfrmSelFormulas\n[Fórmulas Albamix] [Fórmulas Personales]"];
+  busfo   [label="Búsqueda de fórmulas\nfrmBusFormulas\nPor código (desde/hasta) · Por nombre\nPor fecha (desde/hasta)"];
+  formus  [label="Lista de fórmulas\nfrmFormulas\nF2 Buscar · F5 Agregar · F7 Borrar · F8 Editar\nF9 Imprimir · F10 Excel · F12 Dosificar"];
+  formu   [label="Alta / edición de fórmula\nfrmFormula\nColor (código + nombre), Observaciones\nComponentes + Capacidades"];
+  dosif   [label="Dosificación de fórmula\nfrmDosificar\nCapacidad a dosificar → gramos y ml\nPrecio (calculaCostos)"];
+  bonif   [label="Bonificaciones y Rentabilidad\nfrmBonifRent\nGlobal · Bases · Colorantes · Accesorios"];
+  clave   [label="Clave de seguridad\nFrmIngCl\n\"Ingrese la clave:\"  [Cambiar Clave]"];
+  clnueva [label="Cambiar clave\nFrmClaveNueva\nanterior · nueva · repetir"];
+  salidas [label="Salidas\nImprimir (Spread) · Excel (OLE + portapapeles)\nCSV (\"Ingrese el nombre de archivo\")", fillcolor="#FFF5D1", color="#C77805"];
+  fin     [label="\"Salir del programa ?\"\nFin", fillcolor="#005192", fontcolor="white"];
+
+  // Decisiones
+  node [shape=diamond, style=filled, fillcolor="#FFFFFF", color="#005192", fontsize=9, margin="0.02,0.02"];
+  d_bases  [label="¿Abren las 5\nbases en\n..\\bases\\?"];
+  d_clave  [label="¿Clave\ncorrecta?"];
+  d_enuso  [label="¿Producto usado\nen fórmulas?"];
+  d_filtro [label="¿Sin\nfiltros?"];
+  d_valid  [label="¿Validación\nOK?"];
+  d_simil  [label="¿Ya hay fórmula\nmismo color\ny misma base?"];
+  d_nombre [label="¿Código nuevo o\nnombre distinto?"];
+
+  // Flujo
+  inicio -> d_bases;
+  d_bases -> e_bases [label="no"];
+  d_bases -> menu [label="sí"];
+
+  menu -> prods [label="Productos"];
+  menu -> selfo [label="Fórmulas"];
+  menu -> selfo [label="Dosificar fórmula", style=dashed];
+  menu -> clave [label="Bonificaciones\ny Rentabilidad"];
+  menu -> fin [label="Salir / ESC"];
+
+  // Productos
+  prods -> prod [label="F5 / F8"];
+  prods -> d_enuso [label="F7 Borrar"];
+  d_enuso -> e_enuso [label="sí"];
+  d_enuso -> db_pre [label="no: borra", style=dashed];
+  prod -> clave [label="CmdBloqueo\n(bonif. y rentab.)", style=dashed];
+  prod -> db_pre [label="Aceptar\n\"Producto guardado.\"", style=dashed];
+  prods -> salidas [label="F9 / F10", style=dotted];
+
+  // Fórmulas
+  selfo -> formus [label="elige base:\nAlbamix o Personal"];
+  formus -> busfo [label="F2"];
+  busfo -> d_filtro [label="Buscar"];
+  d_filtro -> e_todas [label="sí"];
+  d_filtro -> formus [label="no: carga grilla"];
+  formus -> formu [label="F5 / F8"];
+  formus -> dosif [label="F12"];
+  formus -> salidas [label="F9 / F10", style=dotted];
+
+  formu -> d_valid [label="Aceptar"];
+  d_valid -> e_1000 [label="no"];
+  d_valid -> e_base1 [label="no"];
+  d_valid -> d_nombre [label="sí"];
+  d_nombre -> d_simil [label="confirma\n(advertencia)"];
+  d_simil -> db_alb [label="guarda: \"Fórmula guardada.\"\nid = max(id)+1", style=dashed];
+  d_simil -> db_per [style=dashed];
+
+  dosif -> salidas [label="Imprimir (F9)\nCalidad, Color, Obs.,\nCapacidad, Precio : $"];
+
+  // Clave y rentabilidad
+  d_clave -> e_clave [label="no"];
+  d_clave -> bonif [label="sí"];
+  clave -> d_clave [label="Aceptar"];
+  clave -> clnueva [label="Cambiar Clave"];
+  bonif -> db_bon [label="Aceptar\n\"Rentabilidades guardadas.\"", style=dashed];
+
+  {rank=same; prods; selfo; clave}
+  {rank=same; db_alb; db_per; db_pre; db_bon}
+}
