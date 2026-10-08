@@ -583,3 +583,17 @@ Se suman al plan las funciones que faltaban:
 | ~~Exportar a CSV~~ | Descartado |
 
 No se replica: compartir las bases entre varias PCs por carpeta de red (las PCs no comparten datos).
+
+## Funcionalidades nuevas (decisión 2026-10-08)
+
+| Funcionalidad | Qué hace | Etapa | Estado |
+|---|---|---|---|
+| **"Me pasé" en la balanza** | Si se vierte de más un componente, agranda toda la tanda en la misma proporción: de lo ya vertido pide solo la diferencia, de lo que falta la cantidad escalada, y avisa si hace falta base de otra lata | MVP | ✅ En el núcleo (`corregirExceso`) |
+| **Aviso de cantidades muy chicas** | Marca componentes por debajo de 2 g (configurable) y sugiere la capacidad mínima o el envase de base con el que se pesan con seguridad | MVP | ✅ En el núcleo (`avisarCantidadesChicas`) |
+| **Etiqueta para la lata con QR** | Color, producto, fecha, cliente, número de dosificación y QR que reabre la misma fórmula | Etapa 4 | Pendiente |
+| **Repetir pedido del cliente** | Repite una dosificación del historial con la misma versión de fórmula, avisando si la oficial cambió | Etapa 4 | Pendiente |
+| **Consumo de colorantes** | Descuenta lo usado en cada dosificación, reporte mensual y aviso de reposición | Después del piloto | Pendiente |
+
+**Para evaluar más adelante:** presupuesto en PDF, recientes y favoritos, muestra de color orientativa para RAL,
+corrección de tono guardada como fórmula personal derivada, novedades al actualizar fórmulas oficiales,
+copia de seguridad automática.
