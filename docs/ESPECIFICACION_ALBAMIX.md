@@ -597,3 +597,17 @@ No se replica: compartir las bases entre varias PCs por carpeta de red (las PCs 
 **Para evaluar más adelante:** presupuesto en PDF, recientes y favoritos, muestra de color orientativa para RAL,
 corrección de tono guardada como fórmula personal derivada, novedades al actualizar fórmulas oficiales,
 copia de seguridad automática.
+
+## Etapa 2: importación y base local (2026-10-08)
+
+- **Lector Jet 1.x genérico** (`packages/datos/src/jet1.ts`): lee las `.mdb` del original sin usar la cabecera dañada,
+  arrancando por el catálogo del sistema. Descubre solas las tablas y columnas, así sirve para migrar el `personal.mdb`
+  de cada distribuidor.
+- **Importador** (`importar.ts`): productos (`precios.mdb` + `bonifica.mdb`), fórmulas oficiales (`albamix.mdb`) y
+  personales (`personal.mdb`) al modelo del núcleo, con detección del sistema de colorantes y reporte de calidad.
+- **Base local SQLite** (`base.ts`): es el "paquete de datos" que se distribuye. Incluye la búsqueda del MVP:
+  código o nombre, rango de códigos, rango de fechas, producto, origen y orden ascendente/descendente.
+- **Resultado con los datos reales**: 54 productos, 6.436 fórmulas oficiales + 2 personales, 31.259 renglones;
+  3 fórmulas descartadas por no tener renglones; 894 nombres corregidos solo en espacios; 86 fórmulas repetidas
+  para el mismo código y base (se conservan, como el original); **0 errores de validación** y 0 componentes faltantes.
+- Pendiente: `Capacidades.mdb` (formato Access 2007) no se importa todavía; sus envases ya vienen en `precios.mdb`.

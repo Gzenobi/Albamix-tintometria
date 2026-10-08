@@ -50,6 +50,8 @@ export interface Formula {
   origen?: 'albamix' | 'personal';
   sistema?: SistemaColorantes;
   renglones: Renglon[];
+  /** Capacidades propias de la fórmula (las usan las fórmulas personales), en la unidad indicada. */
+  capacidades?: { capacidad: number; unidad: Unidad }[];
 }
 
 export type Catalogo = ReadonlyMap<number, Componente>;

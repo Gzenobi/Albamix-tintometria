@@ -11,7 +11,8 @@ Reescritura del **Albamix – Sistema Industrial** (Visual Basic 3 + Access 1.x)
 
 | Paquete | Qué es |
 |---|---|
-| `packages/core` | Núcleo de dominio sin UI: validación de fórmulas, dosificación (ml / gramos) y precio |
+| `packages/core` | Núcleo de dominio sin UI: validación de fórmulas, dosificación (ml / gramos), precio, "me pasé" y aviso de cantidades chicas |
+| `packages/datos` | Lector de las `.mdb` originales (Access 1.x con cabecera dañada), importador y base local SQLite con la búsqueda del MVP |
 
 ## Desarrollo
 
@@ -19,8 +20,15 @@ Reescritura del **Albamix – Sistema Industrial** (Visual Basic 3 + Access 1.x)
 npm install
 npm test          # tests del núcleo, incluye casos de oro contra listas de precios reales
 npm run typecheck
+
+# Generar el paquete de datos a partir de las .mdb originales
+npm run importar -w @albamix/datos -- --precios precios.mdb --albamix albamix.mdb \
+    --personal personal.mdb --bonifica bonifica.mdb --salida albamix-datos.sqlite
 ```
+
+El test de importación completa corre solo si se indica dónde está `albamix.mdb` (no se versiona):
+`ALBAMIX_MDB=/ruta/albamix.mdb npm test`
 
 ## Estado
 
-Etapa 1 (núcleo de cálculo) — en curso. Ver el plan en la sección H de la especificación.
+Etapa 1 (núcleo de cálculo) completa. Etapa 2 (importación y base local) completa. Ver el plan en la sección H de la especificación.

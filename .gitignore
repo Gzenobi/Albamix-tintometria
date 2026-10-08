@@ -2,3 +2,5 @@ node_modules/
 dist/
 *.mdb
 *.ldb
+
+!packages/datos/test/fixtures/*.mdb
