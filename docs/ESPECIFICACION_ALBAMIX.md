@@ -565,3 +565,21 @@ La fórmula de precio arranca con la hipótesis F.3 (a) y se valida al final con
 - ¿Las variantes de nombre por cliente (PETINARI, OMBU, SALTO…) son clientes reales?
 - En el punto de venta, ¿una PC o varias que comparten la misma base?
 - Pendiente de recibir: el **.mdb de bases** (regla R6), además de `precios.mdb` y `rentabil.mdb` si existen.
+
+---
+
+## Paridad con la app original (decisión 2026-10-08)
+
+La app nueva replica **todas** las funciones del Albamix original salvo la exportación a CSV, que se descarta por decisión del usuario.
+Se suman al plan las funciones que faltaban:
+
+| Función original | Etapa |
+|---|---|
+| Búsqueda por **rango de códigos** (desde/hasta) | MVP |
+| Búsqueda por **rango de fechas** (desde/hasta) | MVP |
+| **Ordenar** la lista de fórmulas / productos (asc. y desc.) | MVP |
+| Esquema de rentabilidad **global + por tipo** (bases, colorantes, accesorios) **+ por producto** | Etapa 4 |
+| Imprimir y exportar a Excel las listas de productos y fórmulas | Etapa 5 |
+| ~~Exportar a CSV~~ | Descartado |
+
+No se replica: compartir las bases entre varias PCs por carpeta de red (las PCs no comparten datos).
