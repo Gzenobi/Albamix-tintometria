@@ -1,7 +1,10 @@
 {
   "name": "albamix-tintometria",
   "private": true,
-  "workspaces": ["packages/*"],
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
   "scripts": {
     "test": "npm test --workspaces",
     "typecheck": "npm run typecheck --workspaces"

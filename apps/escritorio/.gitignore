@@ -1,0 +1,4 @@
+public/sql-wasm*.wasm
+dist/
+src-tauri/target/
+src-tauri/gen/

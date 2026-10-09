@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Albamix tintometría</title>
+<link rel="icon" href="./favicon.png">
+<link rel="stylesheet" href="./src/estilos.css">
+</head>
+<body>
+<header>
+  <div class="marca">
+    <img class="albamix" src="./albamix-logo.png" alt="Albamix, industrial color service">
+    <div class="lugar"><b>Tintometría <span class="borrador">Versión de prueba</span></b><span class="sub" id="sub-lista">Sin conexión</span></div>
+  </div>
+  <img class="akzo" src="./akzonobel.png" alt="AkzoNobel">
+</header>
+
+<nav id="nav" aria-label="Secciones">
+  <button data-v="buscar" class="on">Buscar color</button>
+  <button data-v="dosificar">Dosificar</button>
+  <button data-v="datos">Datos</button>
+</nav>
+
+<main>
+  <!-- Primer uso: sin datos -->
+  <section id="v-inicio" hidden>
+    <div class="inicio">
+      <h1>Cargá las fórmulas para empezar</h1>
+      <p>La app no trae fórmulas incluidas. Se importan una sola vez desde la carpeta <b>bases</b> del Albamix viejo.</p>
+      <ol>
+        <li>Tocá <b>Importar desde el Albamix viejo</b>.</li>
+        <li>Elegí los archivos <b>precios.mdb</b> (obligatorio), <b>albamix.mdb</b>, <b>personal.mdb</b> y <b>bonifica.mdb</b>. Se pueden seleccionar todos juntos.</li>
+        <li>Listo: las fórmulas quedan guardadas en esta PC.</li>
+      </ol>
+      <button class="btn" data-accion="importar-mdb">Importar desde el Albamix viejo</button>
+      <div class="resultado" id="res-inicio"></div>
+    </div>
+  </section>
+
+  <section id="v-buscar">
+    <div class="buscar-top">
+      <div class="q-wrap">
+        <label class="t" for="q">Código o nombre del color</label>
+        <input id="q" placeholder="1552, RAL 9005, amarillo…" autocomplete="off">
+      </div>
+      <div class="filtros">
+        <div><span class="t" style="display:block;font-size:13px;color:var(--gray-d);margin-bottom:4px">Colorantes</span>
+          <div class="seg" id="sis" role="group" aria-label="Sistema de colorantes"><button data-s="" class="on">Todos</button><button data-s="GVA">GVA</button><button data-s="CONCENTRADOS">Concentrados</button></div></div>
+        <div><span class="t" style="display:block;font-size:13px;color:var(--gray-d);margin-bottom:4px">Fórmulas</span>
+          <div class="seg" id="ori" role="group" aria-label="Origen de las fórmulas"><button data-o="" class="on">Todas</button><button data-o="albamix">Albamix</button><button data-o="personal">Personales</button></div></div>
+        <div><label class="t" for="fb">Producto</label><select id="fb"><option value="">Todos los productos</option></select></div>
+        <button class="link" id="b-mas">Más filtros</button>
+      </div>
+      <div id="cuenta" class="num"></div>
+      <div class="mas-filtros" id="mas-filtros" hidden>
+        <div><span class="t" style="display:block;font-size:13px;color:var(--gray-d);margin-bottom:4px">Código</span>
+          <div class="rango"><input id="cd" type="number" min="1" placeholder="desde"><span>a</span><input id="ch" type="number" min="1" placeholder="hasta"></div></div>
+        <div><span class="t" style="display:block;font-size:13px;color:var(--gray-d);margin-bottom:4px">Cargada entre</span>
+          <div class="rango"><input id="fd" type="date"><span>y</span><input id="fh" type="date"></div></div>
+        <div><label class="t" for="orden">Ordenar por</label>
+          <select id="orden"><option value="codigo">Código</option><option value="nombre">Nombre</option><option value="fecha">Fecha</option></select></div>
+        <div><span class="t" style="display:block;font-size:13px;color:var(--gray-d);margin-bottom:4px">Sentido</span>
+          <div class="seg" id="sentido" role="group" aria-label="Sentido del orden"><button data-d="0" class="on">Ascendente</button><button data-d="1">Descendente</button></div></div>
+        <button class="link" id="b-limpiar">Limpiar filtros</button>
+      </div>
+    </div>
+    <div class="tabla-wrap"><table>
+      <thead><tr><th>Código</th><th>Color</th><th>Producto</th><th>Cargada</th></tr></thead>
+      <tbody id="res"></tbody></table></div>
+  </section>
+
+  <section id="v-dosificar" hidden>
+    <div id="dos-empty" class="vacio">Buscá un color y elegilo de la lista para dosificarlo.</div>
+    <div id="dos" hidden>
+      <div class="dos-top">
+        <div>
+          <h1><span class="cod num" id="d-cod"></span><span id="d-nom"></span></h1>
+          <div class="base">Producto <b id="d-base"></b>, <span id="d-sis"></span></div>
+          <div class="base" id="d-obs"></div>
+        </div>
+        <div class="dos-ctrl">
+          <div><label class="t" for="d-env">Lata de base</label><select id="d-env"></select></div>
+          <div id="d-libre-wrap" hidden><label class="t" for="d-libre">Litros</label><input id="d-libre" type="number" min="0.1" step="0.1" value="4" style="width:90px"></div>
+          <div><span style="display:block;font-size:13px;color:var(--gray-d);margin-bottom:4px">Cómo se dosifica</span>
+            <div class="seg" id="modo" role="group" aria-label="Modo de dosificación"><button data-m="balanza" class="on">Balanza</button><button data-m="corob">COROB D600</button></div></div>
+        </div>
+      </div>
+      <div class="dos-cuerpo">
+        <div class="pesada">
+          <div id="aviso-chico"></div>
+          <div id="correccion" class="correccion" hidden></div>
+          <div id="ahora" class="ahora" aria-live="polite"></div>
+          <div class="acciones-paso" id="acciones-paso">
+            <button class="btn" id="b-sig">Listo, siguiente</button>
+            <button class="btn sec" id="b-ant">Volver un paso</button>
+            <button class="btn sec pase" id="b-pase">Me pasé</button>
+            <button class="link" id="b-rei">Empezar de nuevo</button>
+            <span class="ayuda"><kbd>Enter</kbd> o <kbd>Espacio</kbd> avanza</span>
+          </div>
+          <div id="pasado" class="pasado" hidden>
+            <label class="t" for="pase-g" id="pase-q"></label>
+            <div class="row-pase"><input id="pase-g" inputmode="decimal" autocomplete="off" style="width:140px"><span>g</span>
+              <button class="btn" id="pase-ok">Recalcular</button><button class="link" id="pase-no">Cancelar</button></div>
+            <p class="pase-ayuda">Se agranda toda la tanda en la misma proporción para que el color no cambie.</p>
+            <p class="pase-err" id="pase-err" role="alert"></p>
+          </div>
+          <table><thead id="d-head"></thead><tbody id="pasos"></tbody><tfoot id="d-foot"></tfoot></table>
+        </div>
+        <aside class="ticket" aria-label="Precio">
+          <div id="d-precio"></div>
+          <div class="botones">
+            <button class="btn" id="b-imprimir">Imprimir orden</button>
+          </div>
+          <p class="nota">Imprimir abre el diálogo de Windows para elegir la impresora.</p>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <section id="v-datos" hidden>
+    <div class="datos">
+      <div class="bloque">
+        <h2>Datos cargados</h2>
+        <dl class="estado-datos" id="estado-datos"></dl>
+      </div>
+      <div class="bloque">
+        <h2>Lista de precios</h2>
+        <p>Cargá la planilla Excel de precios. Antes de aplicarla vas a ver qué cambia.</p>
+        <div class="acciones"><button class="btn" data-accion="cargar-excel">Cargar planilla de precios</button></div>
+        <div class="resultado" id="res-excel"></div>
+      </div>
+      <div class="bloque">
+        <h2>Rentabilidad y balanza</h2>
+        <p>Se aplican a los precios y a los avisos de esta PC.</p>
+        <div class="acciones">
+          <div><label class="t" for="cfg-rent">Rentabilidad general (%)</label><input id="cfg-rent" type="number" min="0" step="0.1" style="width:120px"></div>
+          <div><label class="t" for="cfg-umbral">Peso mínimo de la balanza (g)</label><input id="cfg-umbral" type="number" min="0.1" step="0.1" style="width:120px"></div>
+          <button class="btn sec" id="cfg-guardar">Guardar</button>
+        </div>
+        <div class="resultado" id="res-cfg"></div>
+      </div>
+      <div class="bloque">
+        <h2>Copia de seguridad</h2>
+        <p>Guardá una copia de todos los datos en un archivo, o restaurá una copia anterior.</p>
+        <div class="acciones">
+          <button class="btn sec" id="b-exportar">Guardar copia</button>
+          <button class="btn sec" data-accion="restaurar">Restaurar copia</button>
+        </div>
+        <div class="resultado" id="res-copia"></div>
+      </div>
+      <div class="bloque">
+        <h2>Volver a importar</h2>
+        <p>Reemplaza todas las fórmulas y productos por los de las bases del Albamix viejo.</p>
+        <div class="acciones"><button class="btn sec" data-accion="importar-mdb">Importar desde el Albamix viejo</button></div>
+        <div class="resultado" id="res-mdb"></div>
+      </div>
+    </div>
+  </section>
+</main>
+<input type="file" id="f-mdb" accept=".mdb" multiple>
+<input type="file" id="f-excel" accept=".xlsx">
+<input type="file" id="f-copia" accept=".sqlite,.albamix">
+<div id="ocupado" class="ocupado" hidden>Procesando…</div>
+<div id="print-sheet"></div>
+<script type="module" src="./src/main.ts"></script>
+</body>
+</html>

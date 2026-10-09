@@ -626,3 +626,21 @@ copia de seguridad automática.
 - CLI: `npm run precios -w @albamix/datos -- --excel lista.xlsx --base albamix-datos.sqlite [--aplicar]`.
 - Dato a revisar detectado por el control: el Fondo Anticorrosivo Acrílico Tintable (3110203) figura en PESO_ESP a
   $ 7,78 la lata de 16 L ($ 0,49/L), muy por debajo del resto.
+
+## Etapa 3: app de Windows, versión de prueba (2026-10-09)
+
+- **Tauri 2** (`apps/escritorio`): ventana de Windows con las pantallas web. Instalador NSIS **por usuario** (sin
+  administrador) y **versión portable** (`.exe` sin instalar). WebView2: lo trae Windows 11/10 actualizado; si falta,
+  el instalador lo descarga.
+- **Sin datos incluidos**: en el primer uso se importan las `.mdb` del Albamix viejo desde la propia app.
+- **Base local**: SQLite en WebAssembly (sql.js) guardado en IndexedDB, dentro del perfil del usuario. Copia de seguridad
+  y restauración por archivo `.sqlite`. El mismo código corre en un navegador (plan B si IT bloquea el instalador).
+- **Pantallas**: Buscar (texto, sistema, origen Albamix/Personales, producto, rango de códigos y fechas, orden),
+  Dosificar (pesada paso a paso, "Me pasé", aviso de cantidades chicas, modo COROB, precio, imprimir) y Datos
+  (importar, lista de precios Excel, rentabilidad general, peso mínimo de balanza, copia de seguridad).
+- **Precio**: si algún componente no tiene precio cargado (precios.mdb trae $0,10), se muestra "Precio pendiente".
+- **Prueba de punta a punta** (navegador real sobre la app empaquetada): importación de las 6.438 fórmulas en 0,6 s,
+  búsqueda, dosificación con corrección, carga y aplicación de la planilla de precios, copia de seguridad y persistencia
+  al reabrir.
+- **Diseño**: el de la vista previa (opción D). El rediseño estético queda para una etapa posterior.
+- Pendiente: separar la base en "oficial" y "distribuidor"; paquete de actualización firmado; integración COROB.
