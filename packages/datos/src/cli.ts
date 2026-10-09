@@ -7,7 +7,7 @@
 import { existsSync, readFileSync, rmSync } from 'node:fs';
 import { parseArgs } from 'node:util';
 import { importarOriginales } from './importar.js';
-import { BaseLocal } from './base.js';
+import { abrirBaseNode } from './node.js';
 
 const { values } = parseArgs({
   options: {
@@ -24,7 +24,7 @@ const imp = importarOriginales({
   precios: leer(values.precios)!, albamix: leer(values.albamix), personal: leer(values.personal), bonifica: leer(values.bonifica),
 });
 if (existsSync(values.salida!)) rmSync(values.salida!);
-const base = new BaseLocal(values.salida);
+const base = abrirBaseNode(values.salida);
 base.cargar(imp, { fuente: 'Importación de .mdb del Albamix original' });
 base.cerrar();
 

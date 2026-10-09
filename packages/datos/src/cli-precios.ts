@@ -6,7 +6,7 @@
 import { readFileSync } from 'node:fs';
 import { parseArgs } from 'node:util';
 import { aplicarListaPrecios, leerListaPrecios } from './excel.js';
-import { BaseLocal } from './base.js';
+import { abrirBaseNode } from './node.js';
 
 const { values } = parseArgs({ options: {
   excel: { type: 'string' }, base: { type: 'string' }, aplicar: { type: 'boolean', default: false }, forzar: { type: 'boolean', default: false },
@@ -20,7 +20,7 @@ if (lista.errores.length) {
   console.log(`\n${lista.errores.length} problema(s) en la planilla:`);
   for (const e of lista.errores) console.log(`  ${e.fila ? `Fila ${e.fila}` : 'Lista'}${e.columna ? `, ${e.columna}` : ''}: ${e.mensaje}`);
 }
-const base = new BaseLocal(values.base);
+const base = abrirBaseNode(values.base);
 const r = aplicarListaPrecios(base.componentes(), lista);
 console.log(`\nCambios de precio: ${r.actualizados.length} · Productos nuevos: ${r.nuevos.length} · Sin cambios: ${r.sinCambios} · No incluidos (se conservan): ${r.noIncluidos.length}`);
 for (const c of r.actualizados.slice(0, 15)) {

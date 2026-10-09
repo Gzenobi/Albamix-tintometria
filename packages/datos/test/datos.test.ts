@@ -2,7 +2,8 @@ import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { calcularPrecio, crearCatalogo, dosificarEnCapacidad, validarFormula } from '@albamix/core';
-import { BaseJet1, BaseLocal, ErrorJet1, importarOriginales, leerComponentes, leerFormulas } from '../src/index.js';
+import { BaseJet1, ErrorJet1, importarOriginales, leerComponentes, leerFormulas } from '../src/index.js';
+import { abrirBaseNode } from '../src/node.js';
 
 const fx = (n: string) => new Uint8Array(readFileSync(fileURLToPath(new URL(`./fixtures/${n}`, import.meta.url))));
 const precios = fx('precios.mdb'), personal = fx('personal.mdb'), bonifica = fx('bonifica.mdb');
@@ -70,7 +71,7 @@ describe('importación al modelo del núcleo', () => {
 
 describe('base local SQLite', () => {
   const imp = importarOriginales({ precios, personal, bonifica });
-  const base = new BaseLocal();
+  const base = abrirBaseNode();
   base.cargar(imp, { fuente: 'test' });
 
   it('ida y vuelta: lo que se guarda es lo que se lee', () => {
@@ -117,7 +118,7 @@ describe.runIf(rutaAlbamix && existsSync(rutaAlbamix))('importación completa de
     expect(r.renglones).toBe(31251 + 8);
     expect(r.componentesFaltantes).toEqual([]);
     expect(r.problemasValidacion).toEqual({});
-    const base = new BaseLocal();
+    const base = abrirBaseNode();
     base.cargar(imp);
     expect(base.buscar({ texto: '1552' }).total).toBe(9);
     expect(base.buscar({ codigoDesde: 1000, codigoHasta: 1003 }).total).toBeGreaterThan(10);

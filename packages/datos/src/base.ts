@@ -1,8 +1,4 @@
-import { createRequire } from 'node:module';
-import type { DatabaseSync as TipoDatabaseSync } from 'node:sqlite';
-
-// node:sqlite se carga con require: Vite/Vitest todavía no lo reconoce como módulo propio de Node.
-const { DatabaseSync } = createRequire(import.meta.url)('node:sqlite') as typeof import('node:sqlite');
+import type { MotorSql } from './motor.js';
 import type { Componente, Formula, SistemaColorantes, Unidad, TipoComponente } from '@albamix/core';
 import type { Importacion } from './importar.js';
 
@@ -86,15 +82,15 @@ export interface FiltroBusqueda {
 }
 
 export class BaseLocal {
-  readonly db: TipoDatabaseSync;
-
-  constructor(ruta = ':memory:') {
-    this.db = new DatabaseSync(ruta);
-    this.db.exec('PRAGMA foreign_keys = ON;');
-    this.db.exec(ESQUEMA);
+  constructor(readonly db: MotorSql) {
+    db.exec('PRAGMA foreign_keys = ON;');
+    db.exec(ESQUEMA);
   }
 
   cerrar(): void { this.db.close(); }
+
+  /** Cantidad de fórmulas cargadas (0 = la app todavía no tiene datos). */
+  cantidadFormulas(): number { return this.db.get<{ n: number }>('SELECT COUNT(*) AS n FROM formula')!.n; }
 
   /** Reemplaza el contenido por una importación completa, en una sola transacción. */
   cargar(imp: Importacion, meta: Record<string, string> = {}): void {
@@ -105,21 +101,21 @@ export class BaseLocal {
       const insComp = d.prepare('INSERT INTO componente VALUES (?,?,?,?,?,?,?,?)');
       const insEnv = d.prepare('INSERT INTO envase VALUES (?,?,?,?)');
       for (const c of imp.componentes) {
-        insComp.run(c.codigo, c.nombre, c.tipo, c.unidad, c.pesoEspecifico, c.bonificacion ?? null, c.rentabilidad ?? null, c.fraccionBase ?? null);
-        c.envases.forEach((e, i) => insEnv.run(c.codigo, i, e.capacidad, e.precio));
+        insComp.run([c.codigo, c.nombre, c.tipo, c.unidad, c.pesoEspecifico, c.bonificacion ?? null, c.rentabilidad ?? null, c.fraccionBase ?? null]);
+        c.envases.forEach((e, i) => insEnv.run([c.codigo, i, e.capacidad, e.precio]));
       }
       const insF = d.prepare('INSERT INTO formula (origen,id_origen,codigo,nombre,obs,fecha,sistema,base) VALUES (?,?,?,?,?,?,?,?)');
       const insR = d.prepare('INSERT INTO renglon VALUES (?,?,?,?)');
       const insCap = d.prepare('INSERT INTO capacidad_formula VALUES (?,?,?)');
       for (const f of imp.formulas) {
-        const r = insF.run(f.origen ?? 'albamix', f.id ?? null, f.codigo, f.nombre, f.obs ?? null, f.fecha ?? null, f.sistema ?? 'GVA', f.renglones[0]!.comp);
+        const r = insF.run([f.origen ?? 'albamix', f.id ?? null, f.codigo, f.nombre, f.obs ?? null, f.fecha ?? null, f.sistema ?? 'GVA', f.renglones[0]!.comp]);
         const id = Number(r.lastInsertRowid);
-        for (const rg of f.renglones) insR.run(id, rg.linea, rg.comp, rg.cant);
-        for (const k of f.capacidades ?? []) insCap.run(id, k.capacidad, k.unidad);
+        for (const rg of f.renglones) insR.run([id, rg.linea, rg.comp, rg.cant]);
+        for (const k of f.capacidades ?? []) insCap.run([id, k.capacidad, k.unidad]);
       }
       const insMeta = d.prepare('INSERT INTO paquete VALUES (?,?)');
       const todo = { version_esquema: String(VERSION_ESQUEMA), creado: new Date().toISOString(), ...meta, reporte: JSON.stringify(imp.reporte) };
-      for (const [k, v] of Object.entries(todo)) insMeta.run(k, v);
+      for (const [k, v] of Object.entries(todo)) insMeta.run([k, v]);
       d.exec('COMMIT');
     } catch (e) {
       d.exec('ROLLBACK');
@@ -143,13 +139,13 @@ export class BaseLocal {
       const insComp = d.prepare('INSERT INTO componente VALUES (?,?,?,?,?,?,?,?)');
       const insEnv = d.prepare('INSERT INTO envase VALUES (?,?,?,?)');
       for (const c of componentes) {
-        insComp.run(c.codigo, c.nombre, c.tipo, c.unidad, c.pesoEspecifico, c.bonificacion ?? null, c.rentabilidad ?? null, c.fraccionBase ?? null);
-        c.envases.forEach((e, i) => insEnv.run(c.codigo, i, e.capacidad, e.precio));
+        insComp.run([c.codigo, c.nombre, c.tipo, c.unidad, c.pesoEspecifico, c.bonificacion ?? null, c.rentabilidad ?? null, c.fraccionBase ?? null]);
+        c.envases.forEach((e, i) => insEnv.run([c.codigo, i, e.capacidad, e.precio]));
       }
       const set = d.prepare('INSERT INTO paquete VALUES (?,?) ON CONFLICT(clave) DO UPDATE SET valor = excluded.valor');
-      set.run('lista_precios_numero', lista.numero);
-      set.run('lista_precios_vigencia', lista.vigencia);
-      set.run('lista_precios_notas', lista.notas ?? '');
+      set.run(['lista_precios_numero', lista.numero]);
+      set.run(['lista_precios_vigencia', lista.vigencia]);
+      set.run(['lista_precios_notas', lista.notas ?? '']);
       d.exec('COMMIT');
     } catch (e) {
       d.exec('ROLLBACK');
@@ -159,16 +155,16 @@ export class BaseLocal {
 
   meta(): Record<string, string> {
     const out: Record<string, string> = {};
-    for (const r of this.db.prepare('SELECT clave, valor FROM paquete').all() as { clave: string; valor: string }[]) out[r.clave] = r.valor;
+    for (const r of this.db.all<{ clave: string; valor: string }>('SELECT clave, valor FROM paquete')) out[r.clave] = r.valor;
     return out;
   }
 
   componentes(): Componente[] {
     const envases = new Map<number, { capacidad: number; precio: number }[]>();
-    for (const e of this.db.prepare('SELECT componente, capacidad, precio FROM envase ORDER BY componente, orden').all() as { componente: number; capacidad: number; precio: number }[]) {
+    for (const e of this.db.all<{ componente: number; capacidad: number; precio: number }>('SELECT componente, capacidad, precio FROM envase ORDER BY componente, orden')) {
       const l = envases.get(e.componente) ?? []; l.push({ capacidad: e.capacidad, precio: e.precio }); envases.set(e.componente, l);
     }
-    return (this.db.prepare('SELECT * FROM componente ORDER BY codigo').all() as Record<string, unknown>[]).map((c) => ({
+    return this.db.all('SELECT * FROM componente ORDER BY codigo').map((c) => ({
       codigo: c.codigo as number,
       nombre: c.nombre as string,
       tipo: c.tipo as TipoComponente,
@@ -182,11 +178,11 @@ export class BaseLocal {
   }
 
   formula(id: number): Formula | undefined {
-    const f = this.db.prepare('SELECT * FROM formula WHERE id = ?').get(id) as Record<string, unknown> | undefined;
+    const f = this.db.get('SELECT * FROM formula WHERE id = ?', [id]);
     if (!f) return undefined;
-    const renglones = (this.db.prepare('SELECT linea, componente AS comp, cant FROM renglon WHERE formula = ? ORDER BY linea').all(id) as { linea: number; comp: number; cant: number }[])
+    const renglones = this.db.all<{ linea: number; comp: number; cant: number }>('SELECT linea, componente AS comp, cant FROM renglon WHERE formula = ? ORDER BY linea', [id])
       .map((r) => ({ linea: r.linea, comp: r.comp, cant: r.cant }));
-    const capacidades = (this.db.prepare('SELECT capacidad, unidad FROM capacidad_formula WHERE formula = ?').all(id) as { capacidad: number; unidad: Unidad }[])
+    const capacidades = this.db.all<{ capacidad: number; unidad: Unidad }>('SELECT capacidad, unidad FROM capacidad_formula WHERE formula = ?', [id])
       .map((k) => ({ capacidad: k.capacidad, unidad: k.unidad }));
     return {
       id, codigo: f.codigo as number, nombre: f.nombre as string,
@@ -216,11 +212,11 @@ export class BaseLocal {
     const w = where.length ? `WHERE ${where.join(' AND ')}` : '';
     const dir = filtro.descendente ? 'DESC' : 'ASC';
     const orden = { codigo: `f.codigo ${dir}, b.nombre`, nombre: `f.nombre ${dir}, f.codigo`, fecha: `f.fecha ${dir}, f.codigo` }[filtro.orden ?? 'codigo'];
-    const total = (this.db.prepare(`SELECT COUNT(*) AS n FROM formula f ${w}`).get(...args) as { n: number }).n;
-    const filas = this.db.prepare(`
+    const total = this.db.get<{ n: number }>(`SELECT COUNT(*) AS n FROM formula f ${w}`, args)!.n;
+    const filas = this.db.all<ResumenFormula>(`
       SELECT f.id, f.codigo, f.nombre, f.fecha, f.origen, f.sistema, f.base, b.nombre AS baseNombre
       FROM formula f LEFT JOIN componente b ON b.codigo = f.base ${w}
-      ORDER BY ${orden} LIMIT ? OFFSET ?`).all(...args, filtro.limite ?? 300, filtro.desde ?? 0) as unknown as ResumenFormula[];
+      ORDER BY ${orden} LIMIT ? OFFSET ?`, [...args, filtro.limite ?? 300, filtro.desde ?? 0]);
     return { total, filas };
   }
 }

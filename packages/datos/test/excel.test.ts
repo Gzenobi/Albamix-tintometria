@@ -2,7 +2,8 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import ExcelJS from 'exceljs';
 import { describe, expect, it } from 'vitest';
-import { aplicarListaPrecios, BaseLocal, importarOriginales, leerListaPrecios } from '../src/index.js';
+import { aplicarListaPrecios, importarOriginales, leerListaPrecios } from '../src/index.js';
+import { abrirBaseNode } from '../src/node.js';
 
 const fx = (n: string) => new Uint8Array(readFileSync(fileURLToPath(new URL(`./fixtures/${n}`, import.meta.url))));
 const ENC = ['Tipo', 'Código', 'Nombre', 'Peso Esp.', 'Precio 1', 'Capa. 1', 'Precio 2', 'Capa. 2', 'Unidad', 'Bonif.', 'Rentab.', '$ por litro 1', '$ por litro 2'];
@@ -84,7 +85,7 @@ describe('aplicación de la lista al catálogo', () => {
   });
 
   it('en la base local actualiza precios sin tocar las fórmulas y rechaza listas viejas', async () => {
-    const base = new BaseLocal();
+    const base = abrirBaseNode();
     base.cargar(importarOriginales({ precios: fx('precios.mdb'), personal: fx('personal.mdb') }));
     const formulasAntes = base.buscar().total;
     const lista = await leerListaPrecios(await planilla([BASE]));
