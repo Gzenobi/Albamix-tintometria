@@ -127,6 +127,36 @@ export class BaseLocal {
     }
   }
 
+  /**
+   * Reemplaza el maestro de productos y precios (lista de precios nueva) sin tocar las fórmulas.
+   * Rechaza una lista que no sea posterior a la vigente, salvo que se fuerce.
+   */
+  actualizarPrecios(componentes: Componente[], lista: { numero: string; vigencia: string; notas?: string }, forzar = false): void {
+    const actual = this.meta().lista_precios_numero;
+    if (actual && !forzar && lista.numero.localeCompare(actual, 'es', { numeric: true }) <= 0) {
+      throw new Error(`La lista ${lista.numero} no es posterior a la vigente (${actual}).`);
+    }
+    const d = this.db;
+    d.exec('BEGIN');
+    try {
+      d.exec('DELETE FROM envase; DELETE FROM componente;');
+      const insComp = d.prepare('INSERT INTO componente VALUES (?,?,?,?,?,?,?,?)');
+      const insEnv = d.prepare('INSERT INTO envase VALUES (?,?,?,?)');
+      for (const c of componentes) {
+        insComp.run(c.codigo, c.nombre, c.tipo, c.unidad, c.pesoEspecifico, c.bonificacion ?? null, c.rentabilidad ?? null, c.fraccionBase ?? null);
+        c.envases.forEach((e, i) => insEnv.run(c.codigo, i, e.capacidad, e.precio));
+      }
+      const set = d.prepare('INSERT INTO paquete VALUES (?,?) ON CONFLICT(clave) DO UPDATE SET valor = excluded.valor');
+      set.run('lista_precios_numero', lista.numero);
+      set.run('lista_precios_vigencia', lista.vigencia);
+      set.run('lista_precios_notas', lista.notas ?? '');
+      d.exec('COMMIT');
+    } catch (e) {
+      d.exec('ROLLBACK');
+      throw e;
+    }
+  }
+
   meta(): Record<string, string> {
     const out: Record<string, string> = {};
     for (const r of this.db.prepare('SELECT clave, valor FROM paquete').all() as { clave: string; valor: string }[]) out[r.clave] = r.valor;

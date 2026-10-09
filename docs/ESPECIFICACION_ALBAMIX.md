@@ -611,3 +611,18 @@ copia de seguridad automática.
   3 fórmulas descartadas por no tener renglones; 894 nombres corregidos solo en espacios; 86 fórmulas repetidas
   para el mismo código y base (se conservan, como el original); **0 errores de validación** y 0 componentes faltantes.
 - Pendiente: `Capacidades.mdb` (formato Access 2007) no se importa todavía; sus envases ya vienen en `precios.mdb`.
+
+## Actualización de precios por Excel (2026-10-09)
+
+- **Planilla**: mismo formato que el `PESO_ESP` del original (Tipo, Código, Nombre, Peso Esp., Precio 1, Capa. 1,
+  Precio 2, Capa. 2, Unidad, Bonif., Rentab.) + encabezado con **Vigente desde**, **Número de lista** y **Notas**,
+  validaciones de datos y dos columnas de control de **$ por litro**. Se genera con
+  `herramientas/plantilla_precios.py` (precargada con el catálogo y los precios conocidos; los faltantes quedan en amarillo).
+- **Lectura** (`packages/datos/src/excel.ts`): ubica columnas por nombre, acepta coma decimal, informa cada problema con
+  fila y columna, y no incluye los productos con errores. Funciona aunque la planilla se haya guardado con otro programa.
+- **Aplicación**: resume cambios de precio (con % de variación), productos nuevos, sin cambios y no incluidos
+  (se conservan). Reemplaza productos y precios sin tocar las fórmulas, y **rechaza una lista que no sea posterior
+  a la vigente**.
+- CLI: `npm run precios -w @albamix/datos -- --excel lista.xlsx --base albamix-datos.sqlite [--aplicar]`.
+- Dato a revisar detectado por el control: el Fondo Anticorrosivo Acrílico Tintable (3110203) figura en PESO_ESP a
+  $ 7,78 la lata de 16 L ($ 0,49/L), muy por debajo del resto.

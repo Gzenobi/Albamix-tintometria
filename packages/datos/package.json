@@ -7,10 +7,13 @@
   "scripts": {
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "importar": "tsx src/cli.ts"
+    "importar": "tsx src/cli.ts",
+    "precios": "tsx src/cli-precios.ts"
   },
   "dependencies": {
-    "@albamix/core": "*"
+    "@albamix/core": "*",
+    "exceljs": "^4.4.0",
+    "jszip": "^3.10.2"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
